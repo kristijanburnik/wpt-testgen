@@ -1,0 +1,101 @@
+{
+  "/": {
+    "contains": {
+      "specification": "non_empty_list",
+      "subresource_path": "string_map",
+      "excluded_tests": "non_empty_list"
+    },
+
+    "/specification": {
+      "contains": {
+        "name": "non_empty_string",
+        "title": "non_empty_string",
+        "description": "non_empty_string",
+        "referrer_policy": "@referrer_policy_schema",
+        "specification_url": "url_with_status_code_200",
+        "test_expansion": "non_empty_list"
+      },
+
+      "/test_expansion": {
+        "/*": {
+          "matches": "@test_expansion_schema"
+        }
+      }
+    },
+
+    "/excluded_tests": {
+      "/*": {
+        "matches": "@test_expansion_schema"
+      }
+    },
+
+    "/subresource_path":  {
+      "contains": "#@test_expansion_schema/subresource",
+      "/*": {
+        "file_exists": []
+      }
+    },
+  },
+
+  "#referrer_policy_schema": [
+    null,
+    "no-referrer",
+    "no-referrer-when-downgrade",
+    "origin",
+    "origin-when-crossorigin",
+    "unsafe-url"
+  ],
+
+  "#test_expansion_schema": {
+    "expansion": [
+      "default",
+      "override"
+    ],
+
+    "delivery_method": [
+      "http-csp",
+      "meta-referrer",
+      "meta-csp",
+      "attr-referrer",
+      "rel-noreferrer"
+    ],
+
+    "origin": [
+      "same-origin",
+      "cross-origin"
+    ],
+
+    "source_protocol": [
+      "http",
+      "https"
+    ],
+
+    "target_protocol": [
+      "http",
+      "https"
+    ],
+
+    "redirection": [
+      "no-redirect",
+      "keep-origin-redirect",
+      "swap-origin-redirect"
+    ],
+
+    "subresource": [
+      "iframe-tag",
+      "img-tag",
+      "script-tag",
+      "a-tag",
+      "area-tag",
+      "xhr-request",
+      "worker-request",
+      "fetch-request"
+    ],
+
+    "referrer_url": [
+      "omitted",
+      "origin",
+      "stripped-referrer"
+    ]
+  }
+}

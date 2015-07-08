@@ -21,6 +21,7 @@ def expand_test_expansion_pattern(spec_test_expansion, test_expansion_schema):
 
 
 def permute_expansion(expansion, selection = {}, artifact_index = 0):
+    # TODO(kristijanburnik): Move out to spec.
     artifact_order = ['delivery_method', 'redirection', 'origin',
                       'source_protocol', 'target_protocol', 'subresource',
                       'referrer_url', 'name']
@@ -53,6 +54,7 @@ def generate_selection(selection, spec, subresource_path,
     test_directory = os.path.dirname(test_filename)
     full_path = os.path.join(spec_directory, test_directory)
 
+    # TODO(kristijanburnik): All this can be in spec json.
     test_html_template = get_template(test_html_template_basename)
     test_js_template = get_template("test.js.template")
     disclaimer_template = get_template('disclaimer.template')
@@ -82,6 +84,9 @@ def generate_selection(selection, spec, subresource_path,
         os.makedirs(full_path)
     except:
         pass
+
+    #TODO(kristijanburnik): All this can live in the spec json and can be
+    # enslisted as resources: HEADERS and meta tags.
 
     selection['meta_delivery_method'] = ''
 
@@ -160,10 +165,10 @@ def generate_test_source_files(spec_json, target):
                     print 'Excluding selection:', selection_path
 
 
-def main(target):
+def main(args):
     spec_json = load_spec_json();
     spec_validator.assert_valid_spec_json(spec_json)
-    generate_test_source_files(spec_json, target)
+    generate_test_source_files(spec_json, args.target)
 
 
 if __name__ == '__main__':
@@ -174,4 +179,4 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--spec', type = str, default = None,
         help = 'Specify a file used for describing and generating the tests')
     args = parser.parse_args()
-    main(args.target)
+    main(args)
