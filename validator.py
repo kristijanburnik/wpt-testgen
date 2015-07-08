@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from util import *
 from assertion import *
+import re
 
 class Validator(object):
     def __init__(self, spec, schema):
@@ -22,12 +23,38 @@ class Validator(object):
                        "file_exists",
                        "url_with_status_code_200"]
 
+    def _is_user_schema_reference(self, method):
+        return method.startswith("@") or method.startswith("#@")
+
+    def _expand_user_schema_reference(self, ref):
+        requesting_keys = False
+        offset = 1
+        if ref.startswith("#"):
+            requesting_keys = True
+            offset = 2
+
+        ref = ref[offset:]
+        obj = self.user_schema
+
+        path = ref.split('/')
+        for item in path:
+            try:
+                obj = obj[item]
+            except:
+                raise AssertionError("Invalid reference '%s'" % ref)
+
+        if requesting_keys:
+            return obj.keys()
+        else:
+            return obj
+
+
 
     def _assert_contains(self, expectation, value):
         try:
             assert_contains_only_fields(value, expectation.keys())
             for k, method in expectation.iteritems():
-              self._do_assertion(method, None, value, k)
+                self._do_assertion(method, None, value, k)
         except AssertionError, err:
             raise err
 
@@ -39,8 +66,8 @@ class Validator(object):
             assert_non_empty_string(value, key)
         elif method == "non_empty_list":
             assert_non_empty_list(value, key)
-        elif method.startswith("@"):
-           expectation = self.user_schema[method[1:]]
+        elif self._is_user_schema_reference(method):
+           expectation = self._expand_user_schema_reference(method)
            assert_valid_artifact(value, key, expectation)
         else:
             raise ValueError("Not implemented %s" % method  + " " + str(value) + " " + key)
@@ -56,7 +83,8 @@ class Validator(object):
                 recipe[path].append((k, v))
             elif self._is_node(k):
                 self._create_recipe(v, path + k, recipe, user_schema)
-
+            else:
+                raise ValueError("Invalid key '%s' in schema at '%s'" % (k, path))
         return recipe, user_schema
 
 

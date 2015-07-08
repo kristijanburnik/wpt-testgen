@@ -187,5 +187,24 @@ class ValidatorTestCase(unittest.TestCase):
         self.assert_valid(spec, schema)
 
 
+    def test_invalidSpecBadRef_fails(self):
+        spec = {"specification" : ["one"]}
+        schema = {"/" : {
+            "contains": {"specification": "@schema/non_subrule"},
+            "#schema": {"subrule": ["one", "two", "three"]}
+        }}
+        self.assert_invalid(spec, schema)
+
+
+    def test_validSpecGoodRef_passes(self):
+        spec = {"specification" : ["one"]}
+        schema = {"/" : {
+            "contains": {"specification": "@schema/subrule"},
+            "#schema": {"subrule": ["one", "two", "three"]}
+        }}
+        self.assert_valid(spec, schema)
+
+
+
 if __name__ == '__main__':
     unittest.main()

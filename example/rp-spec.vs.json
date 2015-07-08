@@ -30,7 +30,7 @@
     },
 
     "/subresource_path":  {
-      "contains": "#@test_expansion_schema/subresource",
+      "contains_keys": "@test_expansion_schema/subresource",
       "/*": {
         "file_exists": []
       }
