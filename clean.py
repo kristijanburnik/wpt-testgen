@@ -6,7 +6,6 @@ import spec_validator
 
 def rmtree(top):
     top = os.path.abspath(top)
-    assert top != os.path.expanduser("~")
     assert len(top) > len(os.path.expanduser("~"))
 
     for root, dirs, files in os.walk(top, topdown=False):
