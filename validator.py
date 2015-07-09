@@ -3,54 +3,54 @@ from assertion import *
 from util import *
 import re, sys
 
-
 class SchemaError(Exception):
     """Error raised when detected a schema problem."""
     pass
-
 
 class SpecError(Exception):
     """Error raised when detected a schema violation in spec."""
     pass
 
+class NotReachedError(Exception):
+    """Error raised when unreachable code is executed."""
+    pass
 
 class Validator(object):
     def __init__(self, spec, schema):
+        self._rule_method = {"matches": self._assert_matches,
+                             "has_keys": self._assert_has_keys,
+                             "each_value": self._assert_each_value}
+        self._assert_method = {"non_empty_string": assert_non_empty_string,
+                               "non_empty_list": assert_non_empty_list,
+                               "non_empty_dict": assert_non_empty_dict,
+                               "integer": assert_integer,
+                               "existing_file": assert_file_exists}
         self.spec = spec
         self.schema = schema
 
-
     def validate(self, error_details={}):
        self._meta_schema = {}
-       self._rulemap = {}
-       self._create_rulemap(self.schema, path="")
-       self._validate(self.spec, self._rulemap, error_details=error_details)
-
+       self._rule_map = {}
+       self._create_rule_map(self.schema, path="")
+       self._validate(self.spec, self._rule_map, error_details=error_details)
 
     def _is_node(self, key):
         return key.startswith("/")
 
-
     def _is_meta_schema(self, key):
         return key.startswith("#")
 
+    def _is_rule(self, key):
+        return key in self._rule_method
 
-    def _is_assertion(self, key):
-        return key in ["matches", "has_keys", "each_value"]
+    def _is_meta_schema_reference(self, token):
+        return hasattr(token, 'startswith') and token.startswith("@")
 
-    def _is_meta_schema_reference(self, method):
-        return hasattr(method, 'startswith') and method.startswith("@")
-
+    def _get_meta_schema_name(self, token):
+        return token[1:]
 
     def _expand_meta_schema_reference(self, ref):
-        if ref.startswith("#"):
-            requesting_keys = True
-            offset = 2
-        else:
-            requesting_keys = False
-            offset = 1
-
-        ref = ref[offset:]
+        ref = ref[1:]
         obj = self._meta_schema
 
         path = ref.split('/')
@@ -60,96 +60,86 @@ class Validator(object):
             except:
                 raise SchemaError("Invalid reference '%s'" % ref)
 
-        if requesting_keys:
-            return obj.keys()
-        else:
-            return obj
-
+        return obj
 
     def _assert_matches(self, expectation, value):
         if not isinstance(expectation, dict):
-            raise SchemaError("Schema \"matches\" operator expects a dict " + \
+            raise SchemaError("Schema rule \"matches\" expects a dict " + \
                               "or schema reference, got '%s'" % expectation)
 
         assert_contains_only_fields(value, expectation.keys())
         for k, method in expectation.iteritems():
-            self._do_assertion(method, None, value, k)
+            self._assert_spec_value(method, None, value, k)
 
-
-    def _assert_values(self, expectation, mixed):
+    def _assert_each_value(self, expectation, mixed):
         if isinstance(mixed, dict):
             keys = mixed
         elif isinstance(mixed, list):
             keys = range(0, len(mixed))
 
         for key in keys:
-            self._do_assertion(expectation, None, mixed, key)
+            self._assert_spec_value(expectation, None, mixed, key)
 
+    def _assert_has_keys(self, expectation, value):
+        assert_contains_only_fields(value, expectation)
 
-    def _do_assertion(self, method, expectation, value, key=None):
+    def _assert_spec_value(self, method, expectation, value, key):
+        if self._is_meta_schema_reference(method):
+            expectation = self._expand_meta_schema_reference(method)
+            assert_valid_subset(value, key, expectation)
+        elif isinstance(method, list):
+            expectation = method
+            assert_valid_subset(value, key, expectation)
+        elif method in self._assert_method:
+            assertion_method = self._assert_method[method]
+            assertion_method(value, key)
+        else:
+            raise SchemaError('Non-existing assertion method "%s"' %
+                              method)
+
+    def _validate_rule(self, rule, expectation, value):
+        """Validates a node's left handside rule."""
         if self._is_meta_schema_reference(expectation):
             expectation = self._expand_meta_schema_reference(expectation)
 
         try:
-            if method == "matches":
-                self._assert_matches(expectation, value)
-            elif method == "has_keys":
-                assert_contains_only_fields(value, expectation)
-            elif method == "each_value":
-                self._assert_values(expectation, value)
-            elif method == "non_empty_string":
-                assert_non_empty_string(value, key)
-            elif method == "non_empty_list":
-                assert_non_empty_list(value, key)
-            elif method == "non_empty_dict":
-                assert_non_empty_dict(value, key)
-            elif method == "integer":
-                assert_integer(value, key)
-            elif method == "existing_file":
-                assert_file_exists(value, key)
-            elif self._is_meta_schema_reference(method):
-               expectation = self._expand_meta_schema_reference(method)
-               assert_valid_subset(value, key, expectation)
-            elif isinstance(method, list):
-                expectation = method
-                assert_valid_subset(value, key, expectation)
+            if rule in self._rule_method:
+                rule_method = self._rule_method[rule]
+                rule_method(expectation, value)
             else:
-                raise SchemaError('Non-existing assertion method "%s"' %
-                                  method)
+                raise NotReachedError(rule)
         except AssertionError, err:
             raise SpecError(err)
 
-    def _create_rulemap(self, schema, path=""):
+    def _create_rule_map(self, schema, path=""):
         if not isinstance(schema, dict):
             raise SpecError('Value at schema path "%s" must be a dict' % \
                             path)
 
         for k, v in schema.iteritems():
             if self._is_meta_schema(k):
-                self._meta_schema[k[1:]] = v
-            elif self._is_assertion(k):
-                if not path in self._rulemap:
-                    self._rulemap[path] = []
-                self._rulemap[path].append((k, v))
+                self._meta_schema[self._get_meta_schema_name(k)] = v
+            elif self._is_rule(k):
+                if not path in self._rule_map:
+                    self._rule_map[path] = []
+                self._rule_map[path].append((k, v))
             elif self._is_node(k):
-                self._create_rulemap(v, path + k)
+                self._create_rule_map(v, path + k)
             else:
-                raise SchemaError("Invalid key '%s' in schema at '%s'" % \
+                raise SchemaError('Invalid schema rule "%s" at "%s"' % \
                                   (k, path))
 
-
-
-    def _validate(self, value, rulemap, path="/", error_details={}):
+    def _validate(self, value, rule_map, path="/", error_details={}):
         error_details["path"] = path
         error_details["value"] = value
-        if len(rulemap.keys()) == 0 and path != "/":
+        if len(rule_map.keys()) == 0 and path != "/":
             raise SpecError('No schema rule for path "%s"' % path)
 
-        if path in rulemap:
-            for assertion in rulemap[path]:
-                method, expectation = assertion
+        if path in rule_map:
+            for assertion in rule_map[path]:
+                rule, expectation = assertion
                 error_details["expectation"] = expectation
-                self._do_assertion(method, expectation, value)
+                self._validate_rule(rule, expectation, value)
 
         if isinstance(value, dict):
             sequence = value.iteritems()
@@ -161,7 +151,7 @@ class Validator(object):
         for k, v in sequence:
             if isinstance(v, dict) or isinstance(v, list):
                 next_path = path + "/" + k
-                self._validate(v, rulemap, next_path, error_details)
+                self._validate(v, rule_map, next_path, error_details)
 
 
 def main(args):

@@ -3,7 +3,6 @@ import unittest
 import validator
 from validator import SchemaError, SpecError
 
-
 class ValidatorTestCase(unittest.TestCase):
     def assert_valid(self, spec, schema):
         try:
@@ -11,7 +10,6 @@ class ValidatorTestCase(unittest.TestCase):
             v.validate()
         except SpecError, err:
             self.fail(err)
-
 
     def assert_invalid(self, spec, schema, expected_error_type,
                        expected_message):
@@ -26,9 +24,7 @@ class ValidatorTestCase(unittest.TestCase):
         except SchemaError, err:
             self.assertTrue(expected_error_type is SchemaError,
                             "Error type should be SchemaError")
-
         self.assertEqual(expected_message, str(err))
-
 
     def createExampleSchema(self):
         return {"/": {
@@ -45,12 +41,10 @@ class ValidatorTestCase(unittest.TestCase):
                 "color": ["red", "green", "blue"],
                 "fruit": ["apple", "lemon", "orange"]}}
 
-
     def test_emptySpecAndSchema_passes(self):
         spec = {}
         schema = {}
         self.assert_valid(spec, schema)
-
 
     def test_simpleValidSpec_passes(self):
         spec = {"specification" : [{"name": "Sample1"},
@@ -60,7 +54,6 @@ class ValidatorTestCase(unittest.TestCase):
         }}
         self.assert_valid(spec, schema)
 
-
     def test_simpleInvalidSpec_fails(self):
         spec = {"specification" : []}
         schema = {"/" : {
@@ -68,8 +61,13 @@ class ValidatorTestCase(unittest.TestCase):
         }}
         self.assert_invalid(spec, schema, SpecError,
                             'List "specification" must not be empty')
-
-
+    def test_simpleInvalidSchemaRule_fails(self):
+        spec = {"specification" : []}
+        schema = {"/" : {
+            "not_a_rule": {"specification": "non_empty_list"}
+        }}
+        self.assert_invalid(spec, schema, SchemaError,
+                            'Invalid schema rule "not_a_rule" at "/"')
     def test_level2ValidSpec_passes(self):
         spec = {"specification" : [{"name": "Sample1"},
                                    {"name": "Sample2"}]}
@@ -80,7 +78,6 @@ class ValidatorTestCase(unittest.TestCase):
             }
         }}
         self.assert_valid(spec, schema)
-
 
     def test_level2InvalidSpecEmptyString_fails(self):
         spec = {"specification" : [{"name": "Sample1"},
@@ -94,7 +91,6 @@ class ValidatorTestCase(unittest.TestCase):
         self.assert_invalid(spec, schema, SpecError,
                             'Field "name" must not be empty')
 
-
     def test_level2InvalidSpecBadType_fails(self):
         spec = {"specification" : [{"name": "Sample1"},
                                    {"name":  []}]}
@@ -106,7 +102,6 @@ class ValidatorTestCase(unittest.TestCase):
         }}
         self.assert_invalid(spec, schema, SpecError,
                             'Field "name" must be a string')
-
 
     def test_level2InvalidSpecMissingMember_fails(self):
         spec = {"specification" : [{"name": "Sample1"},
@@ -120,7 +115,6 @@ class ValidatorTestCase(unittest.TestCase):
         self.assert_invalid(spec, schema, SpecError,
                             'Must contain field "name"')
 
-
     def test_level2InvalidSpecNonMember_fails(self):
         spec = {"specification" : [{"name": "Sample1"},
                                    {"nonmember":[]}]}
@@ -133,7 +127,6 @@ class ValidatorTestCase(unittest.TestCase):
         self.assert_invalid(spec, schema, SpecError,
                             'Must contain field "name"')
 
-
     def test_level2InvalidExtraMember_fails(self):
         spec = {"specification" : [{"name": "Sample1"},
                                    {"name": "Sample2", "nonmember": []}]}
@@ -145,7 +138,6 @@ class ValidatorTestCase(unittest.TestCase):
         }}
         self.assert_invalid(spec, schema, SpecError,
                             'Unexpected field "nonmember".')
-
 
     def test_validSpecWithUserSchema_passes(self):
         spec = {"specification" : [{"name": "Sample1",
@@ -162,7 +154,6 @@ class ValidatorTestCase(unittest.TestCase):
         }}
         self.assert_valid(spec, schema)
 
-
     def test_validSpecWithUserSchemaAndList_passes(self):
         spec = {"specification" : [{"name": "Sample1",
                                     "color": ["blue", "green"]}]}
@@ -177,7 +168,6 @@ class ValidatorTestCase(unittest.TestCase):
             }
         }}
         self.assert_valid(spec, schema)
-
 
     def test_invalidSpecWithUserSchemaAndList_fails(self):
         spec = {"specification" : [{"name": "Sample1",
@@ -196,7 +186,6 @@ class ValidatorTestCase(unittest.TestCase):
                             'Field "color" must be from: ' + \
                             '[\'*\', \'red\', \'green\', \'blue\']')
 
-
     def test_validSpecWithUserSchemaAndWildcard_passes(self):
         spec = {"specification" : [{"name": "Sample1",
                                     "color": "*"}]}
@@ -211,7 +200,6 @@ class ValidatorTestCase(unittest.TestCase):
             }
         }}
         self.assert_valid(spec, schema)
-
 
     def test_validSpecWithUserSchemaAndEmptyList_passes(self):
         spec = {"specification" : [{"name": "Sample1",
@@ -228,7 +216,6 @@ class ValidatorTestCase(unittest.TestCase):
         }}
         self.assert_valid(spec, schema)
 
-
     def test_invalidSpecBadRef_fails(self):
         spec = {"specification" : ["one"]}
         schema = {"/" : {
@@ -238,7 +225,6 @@ class ValidatorTestCase(unittest.TestCase):
         self.assert_invalid(spec, schema, SchemaError,
                             "Invalid reference 'schema/non_subrule'")
 
-
     def test_validSpecGoodRef_passes(self):
         spec = {"specification" : ["one"]}
         schema = {"/" : {
@@ -246,7 +232,6 @@ class ValidatorTestCase(unittest.TestCase):
             "#schema": {"subrule": ["one", "two", "three"]}
         }}
         self.assert_valid(spec, schema)
-
 
     def test_validSpecWithSchemaReference_passes(self):
         spec = {
@@ -261,7 +246,6 @@ class ValidatorTestCase(unittest.TestCase):
         }
         schema = self.createExampleSchema()
         self.assert_valid(spec, schema)
-
 
     def test_invalidSpecWithSchemaReferenceBadFruit_fails(self):
         spec = {
@@ -279,7 +263,6 @@ class ValidatorTestCase(unittest.TestCase):
                             'Field "fruit" must be from: ' + \
                             '[\'*\', \'apple\', \'lemon\', \'orange\']')
 
-
     def test_invalidSpecWithSchemaReferenceEmptyName_fails(self):
         spec = {
             "specification": [{
@@ -294,7 +277,6 @@ class ValidatorTestCase(unittest.TestCase):
         schema = self.createExampleSchema()
         self.assert_invalid(spec, schema, SpecError,
                             'Field "name" must not be empty')
-
 
     def test_invalidSpecWithSchemaReferenceExtraMember_fails(self):
         spec = {
@@ -312,13 +294,11 @@ class ValidatorTestCase(unittest.TestCase):
         self.assert_invalid(spec, schema, SpecError,
                             'Unexpected field "not-in-spec".')
 
-
     def test_missingSchemaRule_fails(self):
         spec = {"myspec": []}
         schema = {}
         self.assert_invalid(spec, schema, SpecError,
                             'No schema rule for path "//myspec"')
-
 
     def test_invalidSchemaNode_fails(self):
         spec = {"myspec": []}
@@ -327,16 +307,14 @@ class ValidatorTestCase(unittest.TestCase):
                   }}
         self.assert_invalid(spec, schema, SpecError,
                             'Value at schema path "//myspec" must be a dict')
-
     def test_invalidMatchesParameter_fails(self):
         spec = {"myspec": []}
         schema = {"/": {
                     "/myspec": {"matches": "string_is_bad_here"}
                   }}
         self.assert_invalid(spec, schema, SchemaError,
-                            'Schema "matches" operator expects a dict or ' + \
+                            'Schema rule "matches" expects a dict or ' + \
                             'schema reference, got \'string_is_bad_here\'')
-
     def test_NonExistingAssertion_fails(self):
         spec = {"myspec": []}
         schema = {"/": {
@@ -344,7 +322,6 @@ class ValidatorTestCase(unittest.TestCase):
                   }}
         self.assert_invalid(spec, schema, SchemaError,
                             'Non-existing assertion method "something_new"')
-
 
     def test_allSupportedSchemaTypes_passes(self):
         import os
@@ -404,7 +381,6 @@ class ValidatorTestCase(unittest.TestCase):
                   },
                  "#mapper_keys": ["a", "b"]}
         self.assert_valid(spec, schema)
-
 
 if __name__ == '__main__':
     unittest.main()
