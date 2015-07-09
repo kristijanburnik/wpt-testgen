@@ -70,12 +70,12 @@ def assert_value_unique_in(value, used_values):
     used_values[value] = True
 
 
-def assert_valid_artifact(obj, field, schema):
+def assert_valid_subset(obj, field, schema):
     if isinstance(schema, list):
         assert_string_or_list_items_from(obj, field,
                                          ["*"] + schema)
         return
 
     for sub_field, sub_schema in schema.iteritems():
-        assert_valid_artifact(obj[field], sub_field,
+        assert_valid_subset(obj[field], sub_field,
                               sub_schema)

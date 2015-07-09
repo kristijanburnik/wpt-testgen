@@ -1,11 +1,18 @@
 #!/usr/bin/env python
-from util import *
 from assertion import *
+from util import *
 import re, sys
 
+
 class SchemaError(Exception):
-    """Error raised when detected schema problems."""
+    """Error raised when detected a schema problem."""
     pass
+
+
+class SpecError(Exception):
+    """Error raised when detected a schema violation in spec."""
+    pass
+
 
 class Validator(object):
     def __init__(self, spec, schema):
@@ -13,11 +20,18 @@ class Validator(object):
         self.schema = schema
 
 
+    def validate(self, error_details={}):
+       self._meta_schema = {}
+       self._rulemap = {}
+       self._create_rulemap(self.schema, path="")
+       self._validate(self.spec, self._rulemap, error_details=error_details)
+
+
     def _is_node(self, key):
         return key.startswith("/")
 
 
-    def _is_user_schema(self, key):
+    def _is_meta_schema(self, key):
         return key.startswith("#")
 
 
@@ -26,20 +40,22 @@ class Validator(object):
                        "has_keys",
                        "existing_file"]
 
-    def _is_user_schema_reference(self, method):
+    def _is_meta_schema_reference(self, method):
         return hasattr(method, 'startswith') and \
                (method.startswith("@") or method.startswith("#@"))
 
 
-    def _expand_user_schema_reference(self, ref):
-        requesting_keys = False
-        offset = 1
+    def _expand_meta_schema_reference(self, ref):
+
         if ref.startswith("#"):
             requesting_keys = True
             offset = 2
+        else:
+            requesting_keys = False
+            offset = 1
 
         ref = ref[offset:]
-        obj = self.user_schema
+        obj = self._meta_schema
 
         path = ref.split('/')
         for item in path:
@@ -55,103 +71,89 @@ class Validator(object):
 
 
     def _assert_matches(self, expectation, value):
-        try:
-            assert_contains_only_fields(value, expectation.keys())
-            for k, method in expectation.iteritems():
-                self._do_assertion(method, None, value, k)
-        except AssertionError, err:
-            raise err
+        if not isinstance(expectation, dict):
+            raise SchemaError("Schema \"matches\" operator expects a dict " + \
+                              "or schema reference, got '%s'" % expectation)
+
+        assert_contains_only_fields(value, expectation.keys())
+        for k, method in expectation.iteritems():
+            self._do_assertion(method, None, value, k)
 
 
     def _do_assertion(self, method, expectation, value, key=None):
-        if self._is_user_schema_reference(expectation):
-            expectation = self._expand_user_schema_reference(expectation)
+        if self._is_meta_schema_reference(expectation):
+            expectation = self._expand_meta_schema_reference(expectation)
 
-        if method == "matches":
-            assert isinstance(expectation, dict), \
-                   "Schema \"matches\" operator expects a dict or " + \
-                   "schema reference, got '%s'" % expectation
-            self._assert_matches(expectation, value)
-        elif method == "has_keys":
-            assert_contains_only_fields(value, expectation)
-        elif method == "non_empty_string":
-            assert_non_empty_string(value, key)
-        elif method == "non_empty_list":
-            assert_non_empty_list(value, key)
-        elif method == "non_empty_dict":
-            assert_non_empty_dict(value, key)
-        elif method == "integer":
-            assert_integer(value, key)
-        elif method == "existing_file":
-            assert_file_exists(value, key)
-        elif self._is_user_schema_reference(method):
-           expectation = self._expand_user_schema_reference(method)
-           assert_valid_artifact(value, key, expectation)
-        elif isinstance(method, list):
-            expectation = method
-            assert_valid_artifact(value, key, expectation)
-        else:
-            raise AssertionError('Non-existing assertion method "%s"' % method)
+        try:
+            if method == "matches":
+                self._assert_matches(expectation, value)
+            elif method == "has_keys":
+                assert_contains_only_fields(value, expectation)
+            elif method == "non_empty_string":
+                assert_non_empty_string(value, key)
+            elif method == "non_empty_list":
+                assert_non_empty_list(value, key)
+            elif method == "non_empty_dict":
+                assert_non_empty_dict(value, key)
+            elif method == "integer":
+                assert_integer(value, key)
+            elif method == "existing_file":
+                assert_file_exists(value, key)
+            elif self._is_meta_schema_reference(method):
+               expectation = self._expand_meta_schema_reference(method)
+               assert_valid_subset(value, key, expectation)
+            elif isinstance(method, list):
+                expectation = method
+                assert_valid_subset(value, key, expectation)
+            else:
+                raise SchemaError('Non-existing assertion method "%s"' %
+                                  method)
+        except AssertionError, err:
+            raise SpecError(err)
 
-
-    def _create_recipe(self, schema, path="", recipe={}, user_schema={}):
+    def _create_rulemap(self, schema, path=""):
         if not isinstance(schema, dict):
-            raise AssertionError('Value at schema path "%s" must be a dict' % \
-                                 path)
+            raise SpecError('Value at schema path "%s" must be a dict' % \
+                            path)
 
         for k, v in schema.iteritems():
-            if self._is_user_schema(k):
-                user_schema[k[1:]] = v
+            if self._is_meta_schema(k):
+                self._meta_schema[k[1:]] = v
             elif self._is_assertion(k):
-                if not path in recipe:
-                    recipe[path] = []
-                recipe[path].append((k, v))
+                if not path in self._rulemap:
+                    self._rulemap[path] = []
+                self._rulemap[path].append((k, v))
             elif self._is_node(k):
-                self._create_recipe(v, path + k, recipe, user_schema)
+                self._create_rulemap(v, path + k)
             else:
-                raise ValueError("Invalid key '%s' in schema at '%s'" % (k, path))
+                raise SchemaError("Invalid key '%s' in schema at '%s'" % \
+                                  (k, path))
 
-        return recipe, user_schema
 
 
-    def _validate(self, value, recipe, path="/", error_details={}):
+    def _validate(self, value, rulemap, path="/", error_details={}):
         error_details["path"] = path
         error_details["value"] = value
-        if len(recipe.keys()) == 0 and path != "/":
-            raise AssertionError('No schema rule for path "%s"' % path)
+        if len(rulemap.keys()) == 0 and path != "/":
+            raise SpecError('No schema rule for path "%s"' % path)
 
-        if path in recipe:
-            for assertion in recipe[path]:
+        if path in rulemap:
+            for assertion in rulemap[path]:
                 method, expectation = assertion
                 error_details["expectation"] = expectation
                 self._do_assertion(method, expectation, value)
-        else:
-            pass
 
         if isinstance(value, dict):
-            for k, v in value.iteritems():
-                if isinstance(v, dict) or isinstance(v, list):
-                    next_path = path + "/" + k
-                    self._validate(v, recipe, next_path, error_details)
+            sequence = value.iteritems()
         elif isinstance(value, list):
-            for v in value:
-                k = "*"
-                if isinstance(v, dict) or isinstance(v, list):
-                    next_path = path + "/" + k
-                    self._validate(v, recipe, next_path, error_details)
+            sequence = [("*", v) for v in value]
+        else:
+            raise SchemaError("Unexpected value: %s" % str(value))
 
-
-    def validate(self, error_details={}):
-       recipe = {}
-       user_schema = {}
-       self._create_recipe(self.schema,
-                           path="",
-                           recipe=recipe,
-                           user_schema=user_schema)
-       self.user_schema = user_schema
-       self._validate(self.spec, recipe,
-                      error_details=error_details)
-
+        for k, v in sequence:
+            if isinstance(v, dict) or isinstance(v, list):
+                next_path = path + "/" + k
+                self._validate(v, rulemap, next_path, error_details)
 
 
 def main(args):
@@ -161,10 +163,15 @@ def main(args):
     error_details = {}
     try:
         v.validate(error_details=error_details)
-    except AssertionError, err:
-        print 'ERROR:', err.message
+        return
+    except SchemaError, err:
+        print 'Schema Error:', err.message
+    except SpecError, err:
+        print 'Spec Error:', err.message
         print json.dumps(error_details, indent=2)
-        sys.exit(1)
+
+    sys.exit(1)
+
 
 if __name__ == "__main__":
     import argparse
