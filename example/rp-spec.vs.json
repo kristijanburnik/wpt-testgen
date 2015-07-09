@@ -33,9 +33,7 @@
 
     "/subresource_path":  {
       "has_keys": "@test_expansion_schema/subresource",
-      "/*": {
-        "existing_file": []
-      }
+      "each_value": "existing_file"
     }
   },
 

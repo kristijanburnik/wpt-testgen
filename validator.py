@@ -36,17 +36,13 @@ class Validator(object):
 
 
     def _is_assertion(self, key):
-        return key in ["matches",
-                       "has_keys",
-                       "existing_file"]
+        return key in ["matches", "has_keys", "each_value"]
 
     def _is_meta_schema_reference(self, method):
-        return hasattr(method, 'startswith') and \
-               (method.startswith("@") or method.startswith("#@"))
+        return hasattr(method, 'startswith') and method.startswith("@")
 
 
     def _expand_meta_schema_reference(self, ref):
-
         if ref.startswith("#"):
             requesting_keys = True
             offset = 2
@@ -80,6 +76,16 @@ class Validator(object):
             self._do_assertion(method, None, value, k)
 
 
+    def _assert_values(self, expectation, mixed):
+        if isinstance(mixed, dict):
+            keys = mixed
+        elif isinstance(mixed, list):
+            keys = range(0, len(mixed))
+
+        for key in keys:
+            self._do_assertion(expectation, None, mixed, key)
+
+
     def _do_assertion(self, method, expectation, value, key=None):
         if self._is_meta_schema_reference(expectation):
             expectation = self._expand_meta_schema_reference(expectation)
@@ -89,6 +95,8 @@ class Validator(object):
                 self._assert_matches(expectation, value)
             elif method == "has_keys":
                 assert_contains_only_fields(value, expectation)
+            elif method == "each_value":
+                self._assert_values(expectation, value)
             elif method == "non_empty_string":
                 assert_non_empty_string(value, key)
             elif method == "non_empty_list":

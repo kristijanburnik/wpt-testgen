@@ -310,13 +310,13 @@
   ],
 
   "subresource_path": {
-    "a-tag": "/referrer-policy/generic/subresource/document.py",
-    "area-tag": "/referrer-policy/generic/subresource/document.py",
-    "fetch-request": "/referrer-policy/generic/subresource/xhr.py",
-    "iframe-tag": "/referrer-policy/generic/subresource/document.py",
-    "img-tag": "/referrer-policy/generic/subresource/image.py",
-    "script-tag": "/referrer-policy/generic/subresource/script.py",
-    "worker-request": "/referrer-policy/generic/subresource/worker.py",
-    "xhr-request": "/referrer-policy/generic/subresource/xhr.py"
+    "a-tag": "~/web-platform-tests/referrer-policy/generic/subresource/document.py",
+    "area-tag": "~/web-platform-tests/referrer-policy/generic/subresource/document.py",
+    "fetch-request": "~/web-platform-tests/referrer-policy/generic/subresource/xhr.py",
+    "iframe-tag": "~/web-platform-tests/referrer-policy/generic/subresource/document.py",
+    "img-tag": "~/web-platform-tests/referrer-policy/generic/subresource/image.py",
+    "script-tag": "~/web-platform-tests/referrer-policy/generic/subresource/script.py",
+    "worker-request": "~/web-platform-tests/referrer-policy/generic/subresource/worker.py",
+    "xhr-request": "~/web-platform-tests/referrer-policy/generic/subresource/xhr.py"
   }
 }

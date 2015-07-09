@@ -26,7 +26,7 @@ def assert_integer(obj, field):
 
 
 def assert_file_exists(obj, field):
-    assert os.path.isfile(obj[field]), \
+    assert os.path.isfile(os.path.expanduser(obj[field])), \
           'Field "%s" must be an existing file' % field
 
 

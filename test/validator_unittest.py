@@ -358,6 +358,14 @@ class ValidatorTestCase(unittest.TestCase):
             "key_mapper2": {"a": "A", "b": "B"},
             "nonable_choice": None,
             "nonable_choice2": [None],
+            "combined_file_map": {
+                "a": os.path.realpath(__file__),
+                "b": os.path.realpath(__file__)
+            },
+            "file_list": [
+                os.path.realpath(__file__),
+                os.path.realpath(__file__)
+            ]
         }}
         schema = {"/": {
                     "matches": {"spec": "non_empty_dict"},
@@ -371,7 +379,9 @@ class ValidatorTestCase(unittest.TestCase):
                             "key_mapper": "non_empty_dict",
                             "key_mapper2": "non_empty_dict",
                             "nonable_choice": [None, 1, 2],
-                            "nonable_choice2": [None, 1, 2]
+                            "nonable_choice2": [None, 1, 2],
+                            "combined_file_map": "non_empty_dict",
+                            "file_list": "non_empty_list"
                         },
                         "/size_ratios": {
                             "matches": {"sun": "integer",
@@ -382,6 +392,13 @@ class ValidatorTestCase(unittest.TestCase):
                         },
                         "/key_mapper2": {
                             "has_keys": "@mapper_keys"
+                        },
+                        "/combined_file_map": {
+                            "has_keys": "@mapper_keys",
+                            "each_value": "existing_file"
+                        },
+                        "/file_list": {
+                            "each_value": "existing_file"
                         }
                     }
                   },
