@@ -92,8 +92,8 @@ class Validator(object):
 
     def _create_recipe(self, schema, path="", recipe={}, user_schema={}):
         if not isinstance(schema, dict):
-
-            raise AssertionError('Value at schema path "%s" must be a dict' % path)
+            raise AssertionError('Value at schema path "%s" must be a dict' % \
+                                 path)
 
         for k, v in schema.iteritems():
             if self._is_user_schema(k):
@@ -112,30 +112,29 @@ class Validator(object):
 
     def _validate(self, value, recipe, path="/", error_details={}):
         error_details["path"] = path
+        error_details["value"] = value
         if len(recipe.keys()) == 0 and path != "/":
             raise AssertionError('No schema rule for path "%s"' % path)
 
-        rule_path = path
-        if rule_path in recipe:
-            for assertion in recipe[rule_path]:
+        if path in recipe:
+            for assertion in recipe[path]:
                 method, expectation = assertion
+                error_details["expectation"] = expectation
                 self._do_assertion(method, expectation, value)
         else:
             pass
 
         if isinstance(value, dict):
             for k, v in value.iteritems():
-                error_details["object"] = (k, v)
                 if isinstance(v, dict) or isinstance(v, list):
                     next_path = path + "/" + k
-                    self._validate(v, recipe, next_path)
+                    self._validate(v, recipe, next_path, error_details)
         elif isinstance(value, list):
             for v in value:
                 k = "*"
-                error_details["object"] = (k, v)
                 if isinstance(v, dict) or isinstance(v, list):
                     next_path = path + "/" + k
-                    self._validate(v, recipe, next_path)
+                    self._validate(v, recipe, next_path, error_details)
 
 
     def validate(self, error_details={}):
@@ -157,10 +156,10 @@ def main(args):
     v = Validator(spec, schema)
     error_details = {}
     try:
-        v.validate(error_details)
+        v.validate(error_details=error_details)
     except AssertionError, err:
         print 'ERROR:', err.message
-        print error_details
+        print json.dumps(error_details, indent=2)
         sys.exit(1)
 
 if __name__ == "__main__":
