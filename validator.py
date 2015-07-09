@@ -49,27 +49,23 @@ class Validator(object):
     def _get_meta_schema_name(self, token):
         return token[1:]
 
-    def _expand_meta_schema_reference(self, ref):
-        ref = ref[1:]
-        obj = self._meta_schema
-
-        path = ref.split('/')
-        for item in path:
+    def _expand_meta_schema_reference(self, token):
+        meta_schema = self._meta_schema
+        for subkey in self._get_meta_schema_name(token).split('/'):
             try:
-                obj = obj[item]
+                meta_schema = meta_schema[subkey]
             except:
-                raise SchemaError("Invalid reference '%s'" % ref)
-
-        return obj
+                raise SchemaError("Invalid meta schema reference '%s'" % token)
+        return meta_schema
 
     def _assert_matches(self, expectation, value):
         if not isinstance(expectation, dict):
             raise SchemaError("Schema rule \"matches\" expects a dict " + \
-                              "or schema reference, got '%s'" % expectation)
-
+                              "or meta schema reference, got '%s'" % \
+                              expectation)
         assert_contains_only_fields(value, expectation.keys())
-        for k, method in expectation.iteritems():
-            self._assert_spec_value(method, None, value, k)
+        for key, method in expectation.iteritems():
+            self._assert_spec_value(method, None, value, key)
 
     def _assert_each_value(self, expectation, mixed):
         if isinstance(mixed, dict):
@@ -94,8 +90,7 @@ class Validator(object):
             assertion_method = self._assert_method[method]
             assertion_method(value, key)
         else:
-            raise SchemaError('Non-existing assertion method "%s"' %
-                              method)
+            raise SchemaError('Non-existing assertion method "%s"' % method)
 
     def _validate_rule(self, rule, expectation, value):
         """Validates a node's left handside rule."""

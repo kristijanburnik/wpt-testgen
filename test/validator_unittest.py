@@ -195,7 +195,7 @@ class ValidatorTestCase(unittest.TestCase):
             "/specification": {
                 "/*": {
                     "matches": {"name": "non_empty_string",
-                                 "color": "@color_schema"}
+                                "color": "@color_schema"}
                 }
             }
         }}
@@ -223,7 +223,8 @@ class ValidatorTestCase(unittest.TestCase):
             "#schema": {"subrule": ["one", "two", "three"]}
         }}
         self.assert_invalid(spec, schema, SchemaError,
-                            "Invalid reference 'schema/non_subrule'")
+                            "Invalid meta schema reference " + \
+                            "'@schema/non_subrule'")
 
     def test_validSpecGoodRef_passes(self):
         spec = {"specification" : ["one"]}
@@ -314,7 +315,7 @@ class ValidatorTestCase(unittest.TestCase):
                   }}
         self.assert_invalid(spec, schema, SchemaError,
                             'Schema rule "matches" expects a dict or ' + \
-                            'schema reference, got \'string_is_bad_here\'')
+                            'meta schema reference, got \'string_is_bad_here\'')
     def test_NonExistingAssertion_fails(self):
         spec = {"myspec": []}
         schema = {"/": {
