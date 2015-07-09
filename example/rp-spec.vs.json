@@ -1,13 +1,13 @@
 {
   "/": {
-    "contains": {
+    "matches": {
       "specification": "non_empty_list",
       "subresource_path": "string_map",
       "excluded_tests": "non_empty_list"
     },
 
     "/specification": {
-      "contains": {
+      "matches": {
         "name": "non_empty_string",
         "title": "non_empty_string",
         "description": "non_empty_string",
@@ -30,7 +30,7 @@
     },
 
     "/subresource_path":  {
-      "contains_keys": "@test_expansion_schema/subresource",
+      "matches_keys": "@test_expansion_schema/subresource",
       "/*": {
         "file_exists": []
       }

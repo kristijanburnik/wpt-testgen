@@ -18,13 +18,13 @@ class Validator(object):
 
 
     def _is_assertion(self, key):
-        return key in ["contains",
-                       "matches",
+        return key in ["matches",
                        "file_exists",
                        "url_with_status_code_200"]
 
     def _is_user_schema_reference(self, method):
-        return method.startswith("@") or method.startswith("#@")
+        return hasattr(method, 'startswith') and \
+               (method.startswith("@") or method.startswith("#@"))
 
     def _expand_user_schema_reference(self, ref):
         requesting_keys = False
@@ -48,9 +48,7 @@ class Validator(object):
         else:
             return obj
 
-
-
-    def _assert_contains(self, expectation, value):
+    def _assert_matches(self, expectation, value):
         try:
             assert_contains_only_fields(value, expectation.keys())
             for k, method in expectation.iteritems():
@@ -60,20 +58,39 @@ class Validator(object):
 
 
     def _do_assertion(self, method, expectation, value, key=None):
-        if method == "contains":
-            self._assert_contains(expectation, value)
+        if method == "matches":
+            if self._is_user_schema_reference(expectation):
+                expectation = self._expand_user_schema_reference(expectation)
+
+            assert isinstance(expectation, dict), \
+                   "Schema \"matches\" operator expects a dict or " + \
+                   "schema reference, got '%s'" % expectation
+            self._assert_matches(expectation, value)
         elif method == "non_empty_string":
             assert_non_empty_string(value, key)
         elif method == "non_empty_list":
             assert_non_empty_list(value, key)
+        elif method == "non_empty_dict":
+            assert_non_empty_dict(value, key)
+        elif method == "integer":
+            assert_integer(value, key)
+        elif method == "existing_file":
+            assert_file_exists(value, key)
         elif self._is_user_schema_reference(method):
            expectation = self._expand_user_schema_reference(method)
            assert_valid_artifact(value, key, expectation)
+        elif isinstance(method, list):
+            expectation = method
+            assert_valid_artifact(value, key, expectation)
         else:
-            raise ValueError("Not implemented %s" % method  + " " + str(value) + " " + key)
+            raise AssertionError('Non-existing assertion method "%s"' % method)
 
 
     def _create_recipe(self, schema, path="", recipe={}, user_schema={}):
+        if not isinstance(schema, dict):
+
+            raise AssertionError('Value at schema path "%s" must be a dict' % path)
+
         for k, v in schema.iteritems():
             if self._is_user_schema(k):
                 user_schema[k[1:]] = v
@@ -85,12 +102,13 @@ class Validator(object):
                 self._create_recipe(v, path + k, recipe, user_schema)
             else:
                 raise ValueError("Invalid key '%s' in schema at '%s'" % (k, path))
+
         return recipe, user_schema
 
 
     def _validate(self, value, recipe, path="/"):
-        if len(recipe.keys()) == 0:
-            return
+        if len(recipe.keys()) == 0 and path != "/":
+            raise AssertionError('No schema rule for path "%s"' % path)
 
         rule_path = path
         if rule_path in recipe:

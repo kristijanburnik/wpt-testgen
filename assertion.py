@@ -1,3 +1,4 @@
+import os
 
 def assert_non_empty_string(obj, field):
     assert field in obj, 'Missing field "%s"' % field
@@ -8,9 +9,9 @@ def assert_non_empty_string(obj, field):
 
 def assert_non_empty_list(obj, field):
     assert isinstance(obj[field], list), \
-        '%s must be a list' % field
+        'Field "%s" must be a list' % field
     assert len(obj[field]) > 0, \
-        '%s list must not be empty' % field
+        'List "%s" must not be empty' % field
 
 
 def assert_non_empty_dict(obj, field):
@@ -18,6 +19,15 @@ def assert_non_empty_dict(obj, field):
         '%s must be a dict' % field
     assert len(obj[field]) > 0, \
         '%s dict must not be empty' % field
+
+
+def assert_integer(obj, field):
+    assert type(obj[field]) is int, 'Field "%s" must be an integer' % field
+
+
+def assert_file_exists(obj, field):
+    assert os.path.isfile(obj[field]), \
+          'Field "%s" must be an existing file' % field
 
 
 def assert_contains(obj, field):
