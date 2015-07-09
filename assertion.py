@@ -43,8 +43,13 @@ def assert_string_or_list_items_from(obj, field, items):
     if isinstance(obj[field], basestring):
         assert_string_from(obj, field, items)
         return
+    elif obj[field] is None:
+        assert None in items, \
+            'Field "%s" must be from: %s' % (field, str(items))
+        return
 
-    assert isinstance(obj[field], list), "%s must be a list!" % field
+    assert isinstance(obj[field], list), "%s must be a list! Got %s" % \
+           (field, type(obj[field]))
     for allowed_value in obj[field]:
         assert allowed_value != '*', "Wildcard is not supported for lists!"
         assert allowed_value in items, \
@@ -65,12 +70,12 @@ def assert_value_unique_in(value, used_values):
     used_values[value] = True
 
 
-def assert_valid_artifact(exp_pattern, artifact_key, schema):
+def assert_valid_artifact(obj, field, schema):
     if isinstance(schema, list):
-        assert_string_or_list_items_from(exp_pattern, artifact_key,
+        assert_string_or_list_items_from(obj, field,
                                          ["*"] + schema)
         return
 
-    for sub_artifact_key, sub_schema in schema.iteritems():
-        assert_valid_artifact(exp_pattern[artifact_key], sub_artifact_key,
+    for sub_field, sub_schema in schema.iteritems():
+        assert_valid_artifact(obj[field], sub_field,
                               sub_schema)

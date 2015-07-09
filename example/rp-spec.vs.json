@@ -2,23 +2,25 @@
   "/": {
     "matches": {
       "specification": "non_empty_list",
-      "subresource_path": "string_map",
+      "subresource_path": "non_empty_dict",
       "excluded_tests": "non_empty_list"
     },
 
     "/specification": {
-      "matches": {
-        "name": "non_empty_string",
-        "title": "non_empty_string",
-        "description": "non_empty_string",
-        "referrer_policy": "@referrer_policy_schema",
-        "specification_url": "url_with_status_code_200",
-        "test_expansion": "non_empty_list"
-      },
+      "/*": {
+        "matches": {
+          "name": "non_empty_string",
+          "title": "non_empty_string",
+          "description": "non_empty_string",
+          "referrer_policy": "@referrer_policy_schema",
+          "specification_url": "non_empty_string",
+          "test_expansion": "non_empty_list"
+        },
 
-      "/test_expansion": {
-        "/*": {
-          "matches": "@test_expansion_schema"
+        "/test_expansion": {
+          "/*": {
+            "matches": "@test_expansion_schema"
+          }
         }
       }
     },
@@ -30,11 +32,11 @@
     },
 
     "/subresource_path":  {
-      "matches_keys": "@test_expansion_schema/subresource",
+      "has_keys": "@test_expansion_schema/subresource",
       "/*": {
-        "file_exists": []
+        "existing_file": []
       }
-    },
+    }
   },
 
   "#referrer_policy_schema": [
@@ -47,6 +49,8 @@
   ],
 
   "#test_expansion_schema": {
+    "name": "non_empty_string",
+
     "expansion": [
       "default",
       "override"

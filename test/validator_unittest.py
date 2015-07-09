@@ -346,7 +346,11 @@ class ValidatorTestCase(unittest.TestCase):
             "items": [1, 2, 3],
             "subset": [2, 4, 8],
             "size_ratios": {"sun": 109, "earth": 1},
-            "script": os.path.realpath(__file__)
+            "script": os.path.realpath(__file__),
+            "key_mapper": {"a": "A", "b": "B"},
+            "key_mapper2": {"a": "A", "b": "B"},
+            "nonable_choice": None,
+            "nonable_choice2": [None],
         }}
         schema = {"/": {
                     "matches": {"spec": "non_empty_dict"},
@@ -356,14 +360,25 @@ class ValidatorTestCase(unittest.TestCase):
                             "items": "non_empty_list",
                             "subset": [1, 2, 4, 8, 16],
                             "size_ratios": "non_empty_dict",
-                            "script": "existing_file"
+                            "script": "existing_file",
+                            "key_mapper": "non_empty_dict",
+                            "key_mapper2": "non_empty_dict",
+                            "nonable_choice": [None, 1, 2],
+                            "nonable_choice2": [None, 1, 2]
                         },
                         "/size_ratios": {
                             "matches": {"sun": "integer",
                                         "earth": "integer"}
+                        },
+                        "/key_mapper": {
+                            "has_keys": ["a", "b"]
+                        },
+                        "/key_mapper2": {
+                            "has_keys": "@mapper_keys"
                         }
                     }
-                  }}
+                  },
+                 "#mapper_keys": ["a", "b"]}
         self.assert_valid(spec, schema)
 
 if __name__ == '__main__':

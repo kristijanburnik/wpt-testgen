@@ -1,4 +1,4 @@
-
+import re, json
 
 def get_template(basename):
     with open(os.path.join(template_directory, basename)) as f:
@@ -17,15 +17,13 @@ def read_nth_line(fp, line_number):
       return line
 
 
-def load_json(path_to_spec = None):
-    if path_to_spec is None:
-      path_to_spec = spec_filename
-
+def load_json(path_to_file):
     re_error_location = re.compile('line ([0-9]+) column ([0-9]+)')
-    with open(path_to_spec) as f:
+    with open(path_to_file) as f:
         try:
             return json.load(f)
         except ValueError, ex:
+            print "In:", path_to_file
             print ex.message
             match = re_error_location.search(ex.message)
             if match:

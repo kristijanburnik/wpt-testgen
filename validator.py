@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from util import *
 from assertion import *
-import re
+import re, sys
 
 class Validator(object):
     def __init__(self, spec, schema):
@@ -19,12 +19,13 @@ class Validator(object):
 
     def _is_assertion(self, key):
         return key in ["matches",
-                       "file_exists",
-                       "url_with_status_code_200"]
+                       "has_keys",
+                       "existing_file"]
 
     def _is_user_schema_reference(self, method):
         return hasattr(method, 'startswith') and \
                (method.startswith("@") or method.startswith("#@"))
+
 
     def _expand_user_schema_reference(self, ref):
         requesting_keys = False
@@ -48,6 +49,7 @@ class Validator(object):
         else:
             return obj
 
+
     def _assert_matches(self, expectation, value):
         try:
             assert_contains_only_fields(value, expectation.keys())
@@ -58,14 +60,16 @@ class Validator(object):
 
 
     def _do_assertion(self, method, expectation, value, key=None):
-        if method == "matches":
-            if self._is_user_schema_reference(expectation):
-                expectation = self._expand_user_schema_reference(expectation)
+        if self._is_user_schema_reference(expectation):
+            expectation = self._expand_user_schema_reference(expectation)
 
+        if method == "matches":
             assert isinstance(expectation, dict), \
                    "Schema \"matches\" operator expects a dict or " + \
                    "schema reference, got '%s'" % expectation
             self._assert_matches(expectation, value)
+        elif method == "has_keys":
+            assert_contains_only_fields(value, expectation)
         elif method == "non_empty_string":
             assert_non_empty_string(value, key)
         elif method == "non_empty_list":
@@ -106,7 +110,8 @@ class Validator(object):
         return recipe, user_schema
 
 
-    def _validate(self, value, recipe, path="/"):
+    def _validate(self, value, recipe, path="/", error_details={}):
+        error_details["path"] = path
         if len(recipe.keys()) == 0 and path != "/":
             raise AssertionError('No schema rule for path "%s"' % path)
 
@@ -120,17 +125,20 @@ class Validator(object):
 
         if isinstance(value, dict):
             for k, v in value.iteritems():
+                error_details["object"] = (k, v)
                 if isinstance(v, dict) or isinstance(v, list):
                     next_path = path + "/" + k
                     self._validate(v, recipe, next_path)
         elif isinstance(value, list):
             for v in value:
+                k = "*"
+                error_details["object"] = (k, v)
                 if isinstance(v, dict) or isinstance(v, list):
-                    next_path = path + "/*"
+                    next_path = path + "/" + k
                     self._validate(v, recipe, next_path)
 
 
-    def validate(self, error_details=None):
+    def validate(self, error_details={}):
        recipe = {}
        user_schema = {}
        self._create_recipe(self.schema,
@@ -138,7 +146,8 @@ class Validator(object):
                            recipe=recipe,
                            user_schema=user_schema)
        self.user_schema = user_schema
-       self._validate(self.spec, recipe)
+       self._validate(self.spec, recipe,
+                      error_details=error_details)
 
 
 
@@ -151,13 +160,15 @@ def main(args):
         v.validate(error_details)
     except AssertionError, err:
         print 'ERROR:', err.message
-        print json.dumps(error_details, indent=4)
+        print error_details
         sys.exit(1)
 
 if __name__ == "__main__":
-    parser.add_argument('-s', '--spec', type = str, default = None,
+    import argparse
+    parser = argparse.ArgumentParser(description='TestGen validation utility')
+    parser.add_argument('-s', '--spec', type=str, required=True,
         help = 'Specify a file used for describing and generating the tests')
-    parser.add_argument('-v', '--validation_schema', type = str, default = None,
+    parser.add_argument('-v', '--validation_schema', type=str, required=True,
         help = 'Specify a file used for validating the specification')
     args = parser.parse_args()
     main(args)
