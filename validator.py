@@ -3,6 +3,10 @@ from util import *
 from assertion import *
 import re, sys
 
+class SchemaError(Exception):
+    """Error raised when detected schema problems."""
+    pass
+
 class Validator(object):
     def __init__(self, spec, schema):
         self.spec = spec
@@ -42,7 +46,7 @@ class Validator(object):
             try:
                 obj = obj[item]
             except:
-                raise AssertionError("Invalid reference '%s'" % ref)
+                raise SchemaError("Invalid reference '%s'" % ref)
 
         if requesting_keys:
             return obj.keys()
@@ -166,8 +170,8 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='TestGen validation utility')
     parser.add_argument('-s', '--spec', type=str, required=True,
-        help = 'Specify a file used for describing and generating the tests')
+        help = 'Specification file used for describing and generating tests')
     parser.add_argument('-v', '--validation_schema', type=str, required=True,
-        help = 'Specify a file used for validating the specification')
+        help = 'Validation file for validating the specification')
     args = parser.parse_args()
     main(args)
