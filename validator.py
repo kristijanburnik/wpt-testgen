@@ -46,6 +46,8 @@ class Validator(object):
 
                 if self._is_meta_schema_reference(expectation):
                     expectation = self._expand_meta_schema_reference(expectation)
+                elif not isinstance(expectation, dict):
+                    continue
 
                 for k, v in expectation.iteritems():
                     if self._is_meta_schema_reference(v):
@@ -148,7 +150,7 @@ class Validator(object):
                 self._rule_map[path].append((k, v))
             elif self._is_node(k):
                 self._create_rule_map(v, path + k)
-            # TODO(kristijanburnik): Refactor leaf detection.
+            # TODO(kristijanburnik): Refactor leaf marker.
             elif k == "path":
                 if not path in self.leafs:
                     self.leafs[path] = [None, None]
