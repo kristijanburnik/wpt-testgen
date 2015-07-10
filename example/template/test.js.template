@@ -1,12 +1,13 @@
-MixedContentTestCase(
+ReferrerPolicyTestCase(
   {
-    "opt_in_method": "%(opt_in_method)s",
-    "origin": "%(origin)s",
-    "source_scheme": "%(source_scheme)s",
-    "context_nesting": "%(context_nesting)s",
+    "referrer_policy": %(_referrer_policy)s,
+    "delivery_method": "%(delivery_method)s",
     "redirection": "%(redirection)s",
+    "origin": "%(origin)s",
+    "source_protocol": "%(source_protocol)s",
+    "target_protocol": "%(target_protocol)s",
     "subresource": "%(subresource)s",
-    "expectation": "%(expectation)s"
+    "referrer_url": "%(referrer_url)s"
   },
   document.querySelector("meta[name=assert]").content,
   new SanityChecker()

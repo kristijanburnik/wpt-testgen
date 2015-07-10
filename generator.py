@@ -18,11 +18,26 @@ class DryRunWritter(object):
         print filename, content
 
 
+class FileReader(object):
+    def read(self, filename, paths=None):
+        if paths is None:
+            paths = [os.getcwd()]
+        for path in paths:
+            full_path = os.path.join(path, filename)
+            if os.path.isfile(full_path):
+                return open(full_path, "r").read()
+        raise IOError("Cannot find file %s", filename)
+
 class Generator(object):
-    def __init__(self, spec, schema, writer=None):
+    def __init__(self, spec, schema,
+                 reader=None, writer=None, mode="release", paths=None):
         self.spec = spec
         self.schema = schema
+        self.mode = mode
         self.writer = writer if not writer is None else OutputWriter()
+        self.reader = reader if not reader is None else FileReader()
+        self.paths = paths
+
 
     def generate(self, error_details={}):
         v = Validator(self.spec, self.schema)
@@ -35,15 +50,37 @@ class Generator(object):
             for selection in self._permute_pattern(pattern):
                 extended_selection = self._extend(selection, named_chain)
                 path_template = self._leafs[path][0]
-                content_template =  self._leafs[path][1]
+                content_template =  self._resolve_template(self._leafs[path][1], extended_selection)
                 file_path = path_template % extended_selection
                 content =  content_template % extended_selection
                 self.writer.write(file_path, content)
 
+    def _resolve_template(self, mixed, extended_selection):
+        if isinstance(mixed, dict):
+            # TODO(kristijanburnik): Raise error if missing key for template.
+            filename = mixed["__main__"] % extended_selection
+            template = self.reader.read(filename, self.paths)
+
+            # Unwrap and apply the subtemplates first.
+            # TODO(kristijanburnik): This is hacky and not very useful in
+            # general. A template generating order and dependency should be part
+            # of the language of testgen.
+            for template_key, filename_pattern in mixed.iteritems():
+                subtemplate_filename = filename_pattern % extended_selection
+                subtemplate = self.reader.read(subtemplate_filename, self.paths)
+                extended_selection[template_key] = subtemplate % \
+                                                   extended_selection
+
+            return template
+        else:
+            return mixed
+
     def _extend(self, selection, named_chain):
         """Populates selection with reference to parent nodes in spec.
            Values are prefixed with _ for each level"""
-        expanded = {}
+        expanded = {
+            "__mode__": self.mode
+        }
         for k, v in selection.iteritems():
             expanded[k] = v
 
@@ -119,20 +156,35 @@ class Generator(object):
 
             next_path = path + "/" + str(k)
             next_generic_path = self._generalize_path(next_path)
-            next_name = [v] if "name" in v and not self._is_leaf(next_generic_path) else []
+
+            if "name" in v and not self._is_leaf(next_generic_path):
+                next_name = [v]
+            else:
+                next_name = []
 
             for expansion_node in self._traverse(k, v, path=next_path,
-                                                  named_chain=named_chain + \
-                                                              next_name):
+                                                 named_chain=named_chain + \
+                                                             next_name):
                 yield expansion_node
 
 
 def main(args):
     import json
+    # Grab the spec's and schema's path.
+    search_paths = {}
+    for filename in [args.spec, args.validation_schema]:
+        path = os.path.abspath(os.path.dirname(os.path.expanduser(filename)))
+        search_paths[path] = True
+
     spec = load_json(args.spec)
     schema = load_json(args.validation_schema)
     writer = OutputWriter() if not args.dryrun else DryRunWritter()
-    generator = Generator(spec, schema, writer=writer)
+    reader = FileReader()
+    generator = Generator(spec, schema,
+                          writer=writer,
+                          reader=reader,
+                          mode=args.target,
+                          paths=search_paths.keys())
     error_details = {}
     try:
         generator.generate(error_details=error_details)
@@ -157,5 +209,8 @@ if __name__ == "__main__":
     # the spec and validation schema, all in one.
     parser.add_argument("--dryrun", action='store_true', default=False,
                         help="Display what is to be generated.")
+    parser.add_argument('-t', '--target', type = str,
+        choices = ("release", "debug"), default = "release",
+        help = 'Sets the appropriate mode for generating tests')
     args = parser.parse_args()
     main(args)

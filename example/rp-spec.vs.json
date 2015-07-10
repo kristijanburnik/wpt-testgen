@@ -20,7 +20,10 @@
         "/test_expansion": {
           "/*": {
             "path": "gen/%(_name)s/%(delivery_method)s/%(origin)s/%(source_protocol)s-%(target_protocol)s/%(subresource)s/%(name)s.%(redirection)s.%(source_protocol)s.html",
-            "template": "The referrer URL is %(referrer_url)s when a document served over %(source_protocol)s requires an %(target_protocol)s sub-resource via %(subresource)s using the %(delivery_method)s delivery method with %(redirection)s and when the target request is %(origin)s.",
+            "template": {
+              "__main__": "template/test.%(__mode__)s.html.template",
+              "test_js": "template/test.js.template"
+            },
             "matches": "@test_expansion_schema"
           }
         }
