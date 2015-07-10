@@ -29,10 +29,30 @@ class Validator(object):
         self.schema = schema
 
     def validate(self, error_details={}):
-       self._meta_schema = {}
-       self._rule_map = {}
-       self._create_rule_map(self.schema, path="")
-       self._validate(self.spec, self._rule_map, error_details=error_details)
+        self.meta_schema_map = {}
+        self.leafs = {}
+        self._meta_schema = {}
+        self._rule_map = {}
+        self._create_rule_map(self.schema, path="")
+
+        # Flatten the rule map by path.
+        # TODO(kristijanburnik): Refactor this extraction.
+        for path, assertions in self._rule_map.iteritems():
+            for assertion in assertions:
+                rule, expectation = assertion
+                if isinstance(expectation, dict):
+                    if not rule is "matches":
+                        continue
+                    for k, v in expectation.iteritems():
+                        if not self._is_meta_schema_reference(v):
+                            continue
+                        self.meta_schema_map[path + "/" + k] = \
+                            self._expand_meta_schema_reference(v)
+                elif self._is_meta_schema_reference(expectation):
+                    self.meta_schema_map[path] = \
+                        self._expand_meta_schema_reference(expectation)
+
+        self._validate(self.spec, self._rule_map, error_details=error_details)
 
     def _is_node(self, key):
         return key.startswith("/")
@@ -120,6 +140,15 @@ class Validator(object):
                 self._rule_map[path].append((k, v))
             elif self._is_node(k):
                 self._create_rule_map(v, path + k)
+            # TODO(kristijanburnik): Refactor leaf detection.
+            elif k == "path":
+                if not path in self.leafs:
+                    self.leafs[path] = [None, None]
+                self.leafs[path][0] = v
+            elif k == "template":
+                if not path in self.leafs:
+                    self.leafs[path] = [None, None]
+                self.leafs[path][1] = v
             else:
                 raise SchemaError('Invalid schema rule "%s" at "%s"' % \
                                   (k, path))
