@@ -1,4 +1,4 @@
-import re, json
+import re, json, sys
 
 def get_template(basename):
     with open(os.path.join(template_directory, basename)) as f:

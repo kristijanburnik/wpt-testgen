@@ -40,17 +40,22 @@ class Validator(object):
         for path, assertions in self._rule_map.iteritems():
             for assertion in assertions:
                 rule, expectation = assertion
-                if isinstance(expectation, dict):
-                    if not rule is "matches":
+
+                if rule != "matches":
+                    continue
+
+                if self._is_meta_schema_reference(expectation):
+                    expectation = self._expand_meta_schema_reference(expectation)
+
+                for k, v in expectation.iteritems():
+                    if self._is_meta_schema_reference(v):
+                        valid_values = self._expand_meta_schema_reference(v)
+                    elif isinstance(v, list):
+                        valid_values = v
+                    else:
                         continue
-                    for k, v in expectation.iteritems():
-                        if not self._is_meta_schema_reference(v):
-                            continue
-                        self.meta_schema_map[path + "/" + k] = \
-                            self._expand_meta_schema_reference(v)
-                elif self._is_meta_schema_reference(expectation):
-                    self.meta_schema_map[path] = \
-                        self._expand_meta_schema_reference(expectation)
+
+                    self.meta_schema_map[path + "/" + k] = valid_values
 
         self._validate(self.spec, self._rule_map, error_details=error_details)
 
@@ -62,6 +67,9 @@ class Validator(object):
 
     def _is_rule(self, key):
         return key in self._rule_method
+
+    def _is_assertion(self, key):
+        return key in self._assert_method
 
     def _is_meta_schema_reference(self, token):
         return hasattr(token, 'startswith') and token.startswith("@")
@@ -106,7 +114,7 @@ class Validator(object):
         elif isinstance(method, list):
             expectation = method
             assert_valid_subset(value, key, expectation)
-        elif method in self._assert_method:
+        elif self._is_assertion(method):
             assertion_method = self._assert_method[method]
             assertion_method(value, key)
         else:
@@ -198,6 +206,7 @@ def main(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='TestGen validation utility')
+    #TODO(kristijanburnik). Merge as common options.
     parser.add_argument('-s', '--spec', type=str, required=True,
         help = 'Specification file used for describing and generating tests')
     parser.add_argument('-v', '--validation_schema', type=str, required=True,

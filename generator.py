@@ -1,14 +1,32 @@
-from validator import Validator
+from validator import Validator, SchemaError, SpecError
+from util import load_json
+import os
 import re
 
+class OutputWriter(object):
+    def write(self, filename, content):
+        full_path = os.path.dirname(filename)
+        try:
+            os.makedirs(full_path)
+        except:
+            pass
+        with open(filename, "w") as f:
+            f.write(content)
+
+class DryRunWritter(object):
+    def write(self, filename, content):
+        print filename, content
+
+
 class Generator(object):
-    def __init__(self, spec, schema):
+    def __init__(self, spec, schema, writer=None):
         self.spec = spec
         self.schema = schema
+        self.writer = writer if not writer is None else OutputWriter()
 
-    def generate(self):
+    def generate(self, error_details={}):
         v = Validator(self.spec, self.schema)
-        v.validate()
+        v.validate(error_details=error_details)
         self._leafs = v.leafs
         self._meta_schema_map = v.meta_schema_map
         self._re_integer_pattern = re.compile('^[0-9]+$')
@@ -16,9 +34,11 @@ class Generator(object):
             path, named_chain, pattern = expansion_node
             for selection in self._permute_pattern(pattern):
                 extended_selection = self._extend(selection, named_chain)
-                file_path = self._leafs[path][0] % extended_selection
-                generated_value =  self._leafs[path][1] % extended_selection
-                yield file_path, generated_value
+                path_template = self._leafs[path][0]
+                content_template =  self._leafs[path][1]
+                file_path = path_template % extended_selection
+                content =  content_template % extended_selection
+                self.writer.write(file_path, content)
 
     def _extend(self, selection, named_chain):
         """Populates selection with reference to parent nodes in spec.
@@ -107,4 +127,35 @@ class Generator(object):
                 yield expansion_node
 
 
+def main(args):
+    import json
+    spec = load_json(args.spec)
+    schema = load_json(args.validation_schema)
+    writer = OutputWriter() if not args.dryrun else DryRunWritter()
+    generator = Generator(spec, schema, writer=writer)
+    error_details = {}
+    try:
+        generator.generate(error_details=error_details)
+        return
+    except SchemaError, err:
+        print 'Schema Error:', err.message
+    except SpecError, err:
+        print 'Spec Error:', err.message
+        print json.dumps(error_details, indent=2)
 
+    sys.exit(1)
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description='TestGen generator utility')
+    # TODO(kristijanburnik): Merge as common options.
+    parser.add_argument('-s', '--spec', type=str, required=True,
+        help='Specification file used for describing and generating tests')
+    parser.add_argument('-v', '--validation_schema', type=str, required=True,
+        help='Validation file for validating the specification')
+    # TODO(kristijanburnik): Add an option for a single file incorporating
+    # the spec and validation schema, all in one.
+    parser.add_argument("--dryrun", action='store_true', default=False,
+                        help="Display what is to be generated.")
+    args = parser.parse_args()
+    main(args)
