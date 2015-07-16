@@ -151,14 +151,12 @@ class Validator(object):
             elif self._is_node(k):
                 self._create_rule_map(v, path + k)
             # TODO(kristijanburnik): Refactor leaf marker.
-            elif k == "path":
+            elif k == "path" or k == "template" or k == "action":
                 if not path in self.leafs:
-                    self.leafs[path] = [None, None]
-                self.leafs[path][0] = v
-            elif k == "template":
-                if not path in self.leafs:
-                    self.leafs[path] = [None, None]
-                self.leafs[path][1] = v
+                    self.leafs[path] = {"path": None,
+                                        "template": None,
+                                        "action": None}
+                self.leafs[path][k] = v
             else:
                 raise SchemaError('Invalid schema rule "%s" at "%s"' % \
                                   (k, path))

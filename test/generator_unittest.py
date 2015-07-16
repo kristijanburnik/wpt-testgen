@@ -23,7 +23,7 @@ class GeneratorTestCase(unittest.TestCase):
                         },
                         {
                             "name": "lemon",
-                            "color": ["green"]
+                            "color": "*"
                         },
                     ]
                 },
@@ -41,12 +41,19 @@ class GeneratorTestCase(unittest.TestCase):
                         },
                     ]
                 },
+            ],
+            "excluded_tests": [
+                {
+                    "name": "lemon",
+                    "color": ["green", "red"]
+                }
             ]
         }
 
         schema = {
             "/": {
-                "matches": {"specification": "non_empty_list"},
+                "matches": {"specification": "non_empty_list",
+                            "excluded_tests": "non_empty_list"},
                 "/specification/*": {
                     "matches": {
                         "name": "non_empty_string",
@@ -56,11 +63,19 @@ class GeneratorTestCase(unittest.TestCase):
                     "/test_expansion/*": {
                         "path": "%(_name)s/%(color)s.html",
                         "template": "%(color)s %(name)s is of %(_description)s",
+                        "action": "generate",
                         "matches": {
                             "name": "non_empty_string",
                             "color": "@color_schema"
                         }
                         # TODO: add a token saying this should be generated.
+                    }
+                },
+                "/excluded_tests/*": {
+                    "action": "suppress",
+                    "matches": {
+                        "name": "non_empty_string",
+                        "color": "@color_schema"
                     }
                 }
             },
@@ -68,6 +83,8 @@ class GeneratorTestCase(unittest.TestCase):
         }
 
         g = generator.Generator(spec, schema, writer=MockWriter())
+
+        g.generate()
 
         expected = [
             "citrus/red.html red orange is of the family Rutaceae.",

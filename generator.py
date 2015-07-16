@@ -49,11 +49,18 @@ class Generator(object):
             path, named_chain, pattern = expansion_node
             for selection in self._permute_pattern(pattern):
                 extended_selection = self._extend(selection, named_chain)
-                path_template = self._leafs[path][0]
-                content_template =  self._resolve_template(self._leafs[path][1], extended_selection)
-                file_path = path_template % extended_selection
-                content =  content_template % extended_selection
-                self.writer.write(file_path, content)
+                path_template = self._leafs[path]["path"]
+                action = self._leafs[path]["action"]
+                if action == "generate":
+                    content_template = self._resolve_template(
+                        self._leafs[path]["template"], extended_selection)
+                    file_path = path_template % extended_selection
+                    content =  content_template % extended_selection
+                    self.writer.write(file_path, content)
+                elif action == "suppress":
+                    print "Will be excluding", selection
+                elif action != None:
+                    raise SchemaError("Unknown action: %s" % action)
 
     def _resolve_template(self, mixed, extended_selection):
         if isinstance(mixed, dict):
@@ -77,7 +84,7 @@ class Generator(object):
 
     def _extend(self, selection, named_chain):
         """Populates selection with reference to parent nodes in spec.
-           Values are prefixed with _ for each level"""
+           Values are prefixed with _ for each level."""
         expanded = {
             "__mode__": self.mode
         }

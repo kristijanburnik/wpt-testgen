@@ -8,6 +8,7 @@ class ValidatorTestCase(unittest.TestCase):
         try:
             v = validator.Validator(spec, schema)
             v.validate()
+            return v
         except SpecError, err:
             self.fail(err)
 
@@ -68,6 +69,7 @@ class ValidatorTestCase(unittest.TestCase):
         }}
         self.assert_invalid(spec, schema, SchemaError,
                             'Invalid schema rule "not_a_rule" at "/"')
+
     def test_level2ValidSpec_passes(self):
         spec = {"specification" : [{"name": "Sample1"},
                                    {"name": "Sample2"}]}
@@ -78,6 +80,26 @@ class ValidatorTestCase(unittest.TestCase):
             }
         }}
         self.assert_valid(spec, schema)
+
+    def test_level2ValidSpecWithLeafs_passes(self):
+        spec = {"specification" : [{"name": "Sample1"},
+                                   {"name": "Sample2"}]}
+        schema = {"/" : {
+            "matches": {"specification": "non_empty_list"},
+            "/specification": {
+                "/*": {
+                    "matches": {"name": "non_empty_string"},
+                    "action": "include",
+                    "path": "%(name)s",
+                    "template": "Hello, %(name)s"
+                }
+            }
+        }}
+        validator = self.assert_valid(spec, schema)
+        self.assertEquals(validator.leafs["//specification/*"],
+                          {"path": "%(name)s",
+                           "template": "Hello, %(name)s",
+                           "action": "include"})
 
     def test_level2InvalidSpecEmptyString_fails(self):
         spec = {"specification" : [{"name": "Sample1"},
