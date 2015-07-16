@@ -87,20 +87,20 @@ class GeneratorTestCase(unittest.TestCase):
         g.generate()
 
         expected = [
-            "citrus/red.html red orange is of the family Rutaceae.",
-            "citrus/green.html green orange is of the family Rutaceae.",
-            "citrus/yellow.html yellow orange is of the family Rutaceae.",
-            "citrus/green.html green lemon is of the family Rutaceae.",
-            "roses/red.html red pear is of the rose-type tree fruits.",
-            "roses/green.html green pear is of the rose-type tree fruits.",
-            "roses/yellow.html yellow pear is of the rose-type tree fruits.",
-            "roses/red.html red apple is of the rose-type tree fruits.",
-            "roses/green.html green apple is of the rose-type tree fruits."
+            ("citrus/red.html", "red orange is of the family Rutaceae."),
+            ("citrus/green.html", "green orange is of the family Rutaceae."),
+            ("citrus/yellow.html", "yellow orange is of the family Rutaceae."),
+            ("citrus/green.html", "green lemon is of the family Rutaceae."),
+            ("roses/red.html", "red pear is of the rose-type tree fruits."),
+            ("roses/green.html", "green pear is of the rose-type tree fruits."),
+            ("roses/yellow.html", "yellow pear is of the rose-type tree fruits."),
+            ("roses/red.html", "red apple is of the rose-type tree fruits."),
+            ("roses/green.html", "green apple is of the rose-type tree fruits.")
         ]
 
         i = 0
-        for file_path, generated_value in g.writer.fs:
-            self.assertEquals(expected[i], file_path + " " + generated_value)
+        for file_path, generated_value in g.writer.fs.iteritems():
+            self.assertEquals(expected[i], (file_path, generated_value))
             i+=1
 
 if __name__ == '__main__':

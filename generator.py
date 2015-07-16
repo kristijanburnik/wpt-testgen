@@ -45,6 +45,7 @@ class Generator(object):
         self._leafs = v.leafs
         self._meta_schema_map = v.meta_schema_map
         self._re_integer_pattern = re.compile('^[0-9]+$')
+        self._identify_action_paths(None, self.schema)
         for expansion_node in self._traverse(None, self.spec):
             path, named_chain, pattern = expansion_node
             for selection in self._permute_pattern(pattern):
@@ -137,7 +138,7 @@ class Generator(object):
         for i in range(0, len(parts)):
             if self._re_integer_pattern.match(parts[i]):
                 parts[i] = "*"
-        return '/'.join(parts)
+        return '//' + '/'.join(filter(None, parts))
 
     def _expand_pattern(self, pattern, generic_path):
         for k, v in pattern.iteritems():
@@ -148,6 +149,19 @@ class Generator(object):
                 pattern[k] = [v]
 
         return pattern
+
+    def _identify_action_paths(self, key, value, path="/"):
+        generic_path = self._generalize_path(path)
+
+        if "action" in value:
+            print value["action"], self._generalize_path(path)
+            return
+
+        if not self._is_assoc(value):
+            return
+
+        for k, v in self._as_assoc(value):
+            self._identify_action_paths(k, v, path + "/" + str(k))
 
 
     def _traverse(self, key, value, path="/", named_chain=[]):
