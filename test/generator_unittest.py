@@ -46,6 +46,10 @@ class GeneratorTestCase(unittest.TestCase):
                 {
                     "name": "lemon",
                     "color": ["green", "red"]
+                },
+                {
+                    "name": "orange",
+                    "color": "green"
                 }
             ]
         }
@@ -61,14 +65,13 @@ class GeneratorTestCase(unittest.TestCase):
                         "test_expansion": "non_empty_list"
                     },
                     "/test_expansion/*": {
-                        "path": "%(_name)s/%(color)s.html",
+                        "path": "%(_name)s/%(color)s-%(name)s.html",
                         "template": "%(color)s %(name)s is of %(_description)s",
                         "action": "generate",
                         "matches": {
                             "name": "non_empty_string",
                             "color": "@color_schema"
                         }
-                        # TODO: add a token saying this should be generated.
                     }
                 },
                 "/excluded_tests/*": {
@@ -86,18 +89,22 @@ class GeneratorTestCase(unittest.TestCase):
 
         g.generate()
 
-        expected = [
-            ("citrus/red.html", "red orange is of the family Rutaceae."),
-            ("citrus/green.html", "green orange is of the family Rutaceae."),
-            ("citrus/yellow.html", "yellow orange is of the family Rutaceae."),
-            ("citrus/green.html", "green lemon is of the family Rutaceae."),
-            ("roses/red.html", "red pear is of the rose-type tree fruits."),
-            ("roses/green.html", "green pear is of the rose-type tree fruits."),
-            ("roses/yellow.html", "yellow pear is of the rose-type tree fruits."),
-            ("roses/red.html", "red apple is of the rose-type tree fruits."),
-            ("roses/green.html", "green apple is of the rose-type tree fruits.")
-        ]
-
+        expected = [('roses/green-pear.html',
+                     'green pear is of the rose-type tree fruits.'),
+                    ('citrus/yellow-lemon.html',
+                     'yellow lemon is of the family Rutaceae.'),
+                    ('roses/green-apple.html',
+                     'green apple is of the rose-type tree fruits.'),
+                    ('citrus/yellow-orange.html',
+                     'yellow orange is of the family Rutaceae.'),
+                    ('citrus/red-orange.html',
+                     'red orange is of the family Rutaceae.'),
+                    ('roses/red-pear.html',
+                     'red pear is of the rose-type tree fruits.'),
+                    ('roses/red-apple.html',
+                     'red apple is of the rose-type tree fruits.'),
+                    ('roses/yellow-pear.html',
+                     'yellow pear is of the rose-type tree fruits.')]
         i = 0
         for file_path, generated_value in g.writer.fs.iteritems():
             self.assertEquals(expected[i], (file_path, generated_value))

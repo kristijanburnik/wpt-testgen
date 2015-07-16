@@ -45,23 +45,32 @@ class Generator(object):
         self._leafs = v.leafs
         self._meta_schema_map = v.meta_schema_map
         self._re_integer_pattern = re.compile('^[0-9]+$')
-        self._identify_action_paths(None, self.schema)
-        for expansion_node in self._traverse(None, self.spec):
+        self._path_action = {}
+        self._identify_path_actions(None, self.schema)
+        self._excluded_selections = {}
+
+        for expansion_node in self._traverse(None, self.spec,
+                                             match_action="suppress"):
             path, named_chain, pattern = expansion_node
             for selection in self._permute_pattern(pattern):
+                print "To be excluded", selection
+                self._excluded_selections[str(selection)] = True
+
+        for expansion_node in self._traverse(None, self.spec,
+                                             match_action="generate"):
+            path, named_chain, pattern = expansion_node
+            for selection in self._permute_pattern(pattern):
+                if str(selection) in self._excluded_selections:
+                    print "Excluding", selection
+                    continue
+                print "Generating", selection
                 extended_selection = self._extend(selection, named_chain)
                 path_template = self._leafs[path]["path"]
-                action = self._leafs[path]["action"]
-                if action == "generate":
-                    content_template = self._resolve_template(
-                        self._leafs[path]["template"], extended_selection)
-                    file_path = path_template % extended_selection
-                    content =  content_template % extended_selection
-                    self.writer.write(file_path, content)
-                elif action == "suppress":
-                    print "Will be excluding", selection
-                elif action != None:
-                    raise SchemaError("Unknown action: %s" % action)
+                content_template = self._resolve_template(
+                    self._leafs[path]["template"], extended_selection)
+                file_path = path_template % extended_selection
+                content = content_template % extended_selection
+                self.writer.write(file_path, content)
 
     def _resolve_template(self, mixed, extended_selection):
         if isinstance(mixed, dict):
@@ -150,23 +159,26 @@ class Generator(object):
 
         return pattern
 
-    def _identify_action_paths(self, key, value, path="/"):
+    def _identify_path_actions(self, key, value, path="/"):
         generic_path = self._generalize_path(path)
 
         if "action" in value:
-            print value["action"], self._generalize_path(path)
+            generic_path = self._generalize_path(path)
+            self._path_action[generic_path] = value["action"]
             return
 
         if not self._is_assoc(value):
             return
 
         for k, v in self._as_assoc(value):
-            self._identify_action_paths(k, v, path + "/" + str(k))
+            self._identify_path_actions(k, v, path + "/" + str(k))
 
-
-    def _traverse(self, key, value, path="/", named_chain=[]):
+    def _traverse(self, key, value, path="/", named_chain=[],
+                  match_action=None):
         generic_path = self._generalize_path(path)
         if self._is_leaf(generic_path):
+            if self._path_action.get(generic_path, None) != match_action:
+                return
             expanded_pattern = self._expand_pattern(value, generic_path)
             yield generic_path, named_chain, expanded_pattern
             return
@@ -185,7 +197,8 @@ class Generator(object):
 
             for expansion_node in self._traverse(k, v, path=next_path,
                                                  named_chain=named_chain + \
-                                                             next_name):
+                                                             next_name,
+                                                 match_action=match_action):
                 yield expansion_node
 
 
