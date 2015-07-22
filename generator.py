@@ -17,7 +17,6 @@ class DryRunWritter(object):
     def write(self, filename, content):
         print filename, content
 
-
 class FileReader(object):
     def read(self, filename, paths=None):
         if paths is None:
@@ -38,7 +37,6 @@ class Generator(object):
         self.reader = reader if not reader is None else FileReader()
         self.paths = paths
 
-
     def generate(self, error_details={}):
         v = Validator(self.spec, self.schema)
         v.validate(error_details=error_details)
@@ -56,6 +54,7 @@ class Generator(object):
                 print "To be excluded", selection
                 self._excluded_selections[str(selection)] = True
 
+        selection_index = 0
         for expansion_node in self._traverse(None, self.spec,
                                              match_action="generate"):
             path, named_chain, pattern = expansion_node
@@ -64,7 +63,8 @@ class Generator(object):
                     print "Excluding", selection
                     continue
                 print "Generating", selection
-                extended_selection = self._extend(selection, named_chain)
+                extended_selection = self._extend(selection, named_chain, selection_index)
+                selection_index += 1
                 path_template = self._leafs[path]["path"]
                 content_template = self._resolve_template(
                     self._leafs[path]["template"], extended_selection)
@@ -92,11 +92,12 @@ class Generator(object):
         else:
             return mixed
 
-    def _extend(self, selection, named_chain):
+    def _extend(self, selection, named_chain, selection_index):
         """Populates selection with reference to parent nodes in spec.
            Values are prefixed with _ for each level."""
         expanded = {
-            "__mode__": self.mode
+            "__mode__": self.mode,
+            "__index__": selection_index
         }
         for k, v in selection.iteritems():
             expanded[k] = v
@@ -200,7 +201,6 @@ class Generator(object):
                                                              next_name,
                                                  match_action=match_action):
                 yield expansion_node
-
 
 def main(args):
     import json
