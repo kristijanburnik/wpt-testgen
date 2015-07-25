@@ -6,6 +6,20 @@
       "feature_enabled": "no",
       "url": "*",
       "expectation": "allowed"
+    },
+    {
+      "name": "blocked-when-feature-enabled",
+      "description": "Unsafe URLs blocked when feature is enabled",
+      "feature_enabled": "yes",
+      "url": "http://unsafe.url",
+      "expectation": "blocked"
+    },
+    {
+      "name": "allowed-when-feature-enabled",
+      "description": "Safe URLs allowed when feature is enabled",
+      "feature_enabled": "yes",
+      "url": ["https://safe.url", "http://safe.url"],
+      "expectation": "allowed"
     }
   ]
 }

@@ -236,9 +236,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='TestGen generator utility')
     # TODO(kristijanburnik): Merge as common options.
     parser.add_argument('-s', '--spec', type=str, required=True,
-        help='Specification file used for describing and generating tests')
-    parser.add_argument('-v', '--validation_schema', type=str, required=True,
-        help='Validation file for validating the specification')
+        help='Specification file used for describing test scenarios')
+    parser.add_argument('-v', '--schema', type=str, required=True,
+        help='Schema file for validating and generating from specification')
     # TODO(kristijanburnik): Add an option for a single file incorporating
     # the spec and validation schema, all in one.
     parser.add_argument("--dryrun", action='store_true', default=False,
