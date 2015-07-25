@@ -610,3 +610,13 @@ generating.
 
 Browse the entire
 [safe-links](https://github.com/kristijanburnik/wpt-testgen/tree/master/examples/safe-links/) example.
+
+# Notes about the generator
+
+It should be emphasized that currently the generator does not remove any
+existing files. It can only overwrite them. Therefore, before regenerating tests
+one should make sure to delete any previously generated files. This is very
+important, especially in context of Web Platform Tests, since all HTML files
+are regarded as tests.
+
+A clean utility script is being developed to help with the issue.
