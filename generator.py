@@ -271,7 +271,7 @@ def main(args):
 
     sys.exit(1)
 
-if __name__ == "__main__":
+def main():
     import argparse
     parser = argparse.ArgumentParser(description='TestGen generator utility')
     # TODO(kristijanburnik): Merge as common options.
@@ -288,3 +288,7 @@ if __name__ == "__main__":
         help = 'Sets the appropriate mode for generating tests')
     args = parser.parse_args()
     main(args)
+
+
+if __name__ == "__main__":
+    main()
