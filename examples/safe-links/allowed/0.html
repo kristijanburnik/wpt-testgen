@@ -1,0 +1,22 @@
+<html>
+<head>
+  <title>allowed-when-feature-not-enabled</title>
+  <meta name="description" content="All navigations allowed if feature is disabled.">
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/safe-links/generic/safe-links-test-case.js"></script>
+</head>
+<body>
+  <script>
+    var scenario = {
+      "name": "allowed-when-feature-not-enabled",
+      "description": "All navigations allowed if feature is disabled.",
+      "feature_enabled": "no",
+      "url": "http://safe.url",
+      "expectation": "allowed"
+    };
+    SafeLinksTestCase(scenario).start();
+ </script>
+</body>
+</html>
+

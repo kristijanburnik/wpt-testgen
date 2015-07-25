@@ -1,0 +1,22 @@
+<html>
+<head>
+  <title>allowed-when-feature-enabled</title>
+  <meta name="description" content="Safe URLs allowed when feature is enabled">
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/safe-links/generic/safe-links-test-case.js"></script>
+</head>
+<body>
+  <script>
+    var scenario = {
+      "name": "allowed-when-feature-enabled",
+      "description": "Safe URLs allowed when feature is enabled",
+      "feature_enabled": "yes",
+      "url": "https://safe.url",
+      "expectation": "allowed"
+    };
+    SafeLinksTestCase(scenario).start();
+ </script>
+</body>
+</html>
+

@@ -1,0 +1,22 @@
+<html>
+<head>
+  <title>blocked-when-feature-enabled</title>
+  <meta name="description" content="Unsafe URLs blocked when feature is enabled">
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/safe-links/generic/safe-links-test-case.js"></script>
+</head>
+<body>
+  <script>
+    var scenario = {
+      "name": "blocked-when-feature-enabled",
+      "description": "Unsafe URLs blocked when feature is enabled",
+      "feature_enabled": "yes",
+      "url": "http://unsafe.url",
+      "expectation": "blocked"
+    };
+    SafeLinksTestCase(scenario).start();
+ </script>
+</body>
+</html>
+
