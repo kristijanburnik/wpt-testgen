@@ -10,8 +10,7 @@ class MockWriter(object):
         self.fs[filename] = content
 
 class GeneratorTestCase(unittest.TestCase):
-
-    def __test_simple_generatesSelection(self):
+    def test_simple_generatesSelection(self):
         spec = {
             "specification": [
                 {
@@ -19,14 +18,12 @@ class GeneratorTestCase(unittest.TestCase):
                     "description": "the family Rutaceae.",
                     "test_expansion": [
                         {
-                            "__comment__": "Oranges, oranges everywhere.",
-                            "name": "orange",
+                            "fruit": "orange",
                             "color": "*",
                             "expectation": "sweet"
                         },
                         {
-                            "__comment__": "Squeeze me a lemonde.",
-                            "name": "lemon",
+                            "fruit": "lemon",
                             "color": "*",
                             "expectation": "sour"
                         },
@@ -37,14 +34,12 @@ class GeneratorTestCase(unittest.TestCase):
                     "description": "the rose-type tree fruits.",
                     "test_expansion": [
                         {
-                            "__comment__": "Pears are cool.",
-                            "name": "pear",
+                            "fruit": "pear",
                             "color": "*",
                             "expectation": "sweet"
                         },
                         {
-                            "__comment__": "Apples are fine.",
-                            "name": "apple",
+                            "fruit": "apple",
                             "color": ["red", "green"],
                             "expectation": "sweet"
                         },
@@ -53,14 +48,12 @@ class GeneratorTestCase(unittest.TestCase):
             ],
             "excluded_tests": [
                 {
-                    "__comment__": "Green and red lemons are a no-go.",
-                    "name": "lemon",
+                    "fruit": "lemon",
                     "color": ["green", "red"],
                     "expectation": "*"
                 },
                 {
-                    "__comment__": "I don't eat green oranges.",
-                    "name": "orange",
+                    "fruit": "orange",
                     "color": "green",
                     "expectation": "*"
                 }
@@ -78,16 +71,16 @@ class GeneratorTestCase(unittest.TestCase):
                         "test_expansion": "non_empty_list",
                     },
                     "/test_expansion/*": {
-                        "path": "%(_name)s/%(color)s-%(name)s.html",
-                        "template": "%(color)s %(name)s is of %(_description)s",
+                        "path": "%(_name)s/%(color)s-%(fruit)s.html",
+                        "template": "%(color)s %(fruit)s is of %(_description)s",
                         "action": "generate",
                         "matches": "@scenario_schema",
                         "when": [{
                             "match_any": [["%(color)s", "yellow"]],
                             "do": [{
                               "action": "generate",
-                              "path": "%(_name)s/%(color)s-%(name)s.html.headers",
-                              "template": "Sample-Header: %(color)s %(name)s"
+                              "path": "%(_name)s/%(color)s-%(fruit)s.html.headers",
+                              "template": "Sample-Header: %(color)s %(fruit)s"
                             }]
                           }]
                     }
@@ -99,7 +92,7 @@ class GeneratorTestCase(unittest.TestCase):
             },
             "#color_schema": ["red", "green", "yellow"],
             "#scenario_schema": {
-                "name": "non_empty_string",
+                "fruit": "non_empty_string",
                 "color": "@color_schema",
                 "expectation": "@expectation_schema"
             },
@@ -132,9 +125,9 @@ class GeneratorTestCase(unittest.TestCase):
                     ('roses/yellow-pear.html.headers',
                      'Sample-Header: yellow pear')]
 
-        self.assert_generated(expected, g.writer.fs)
+        self.assert_generated(expected, generated=g.writer.fs)
 
-    def test_comments(self):
+    def x_test_comments(self):
         spec = {
           "scenarios": [
             {
