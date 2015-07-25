@@ -252,7 +252,7 @@ class Generator(object):
                                                  match_action=match_action):
                 yield expansion_node
 
-def main(args):
+def run_generator(args):
     import json, sys
     # Grab the spec's and schema's path.
     search_paths = {}
@@ -297,7 +297,7 @@ def main():
         choices = ("release", "debug"), default = "release",
         help = 'Sets the appropriate mode for generating tests')
     args = parser.parse_args()
-    main(args)
+    run_generator(args)
 
 
 if __name__ == "__main__":
