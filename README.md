@@ -1,6 +1,6 @@
 # WPT TestGen
 
-![travis-build](https://travis-ci.org/kristijanburnik/wpt-testgen.svg?branch=master)
+[![Build Status](https://travis-ci.org/kristijanburnik/wpt-testgen.svg?branch=master)](https://travis-ci.org/kristijanburnik/wpt-testgen)
 
 ## Tools for specifying and generating Web Platform Tests
 
