@@ -354,3 +354,6 @@ TODO(kristijanburnik): TBD
 ## Wrapping things up
 
 TODO(kristijanburnik): TBD
+
+See the entire tests in the
+[safe-links example](https://github.com/kristijanburnik/wpt-testgen/tree/master/examples/safe-links/).
