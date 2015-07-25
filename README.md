@@ -113,8 +113,8 @@ define which values we can use and expand into:
 }
 ```
 
-Notice we can define our custom subschemas by the "#" prefix and then reference
-them by "@".
+Notice how we can define our custom **meta schemas** by the "#" prefix and then
+reference them by "@".
 
 
 ## Generating the Tests
@@ -630,7 +630,7 @@ Browse the entire
 
 # Notes about the generator
 
-It should be emphasized that currently the generator does not remove any
+It should be emphasized that the generator currently does not remove any
 existing files. It can only overwrite them. Therefore, before regenerating tests
 one should make sure to delete any previously generated files. This is very
 important, especially in context of Web Platform Tests, since all HTML files
