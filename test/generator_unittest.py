@@ -19,11 +19,13 @@ class GeneratorTestCase(unittest.TestCase):
                     "test_expansion": [
                         {
                             "name": "orange",
-                            "color": "*"
+                            "color": "*",
+                            "expectation": "sour"
                         },
                         {
                             "name": "lemon",
-                            "color": "*"
+                            "color": "*",
+                            "expectation": "sour"
                         },
                     ]
                 },
@@ -33,11 +35,13 @@ class GeneratorTestCase(unittest.TestCase):
                     "test_expansion": [
                         {
                             "name": "pear",
-                            "color": "*"
+                            "color": "*",
+                            "expectation": "sweet"
                         },
                         {
                             "name": "apple",
-                            "color": ["red", "green"]
+                            "color": ["red", "green"],
+                            "expectation": "sweet"
                         },
                     ]
                 },
@@ -45,11 +49,13 @@ class GeneratorTestCase(unittest.TestCase):
             "excluded_tests": [
                 {
                     "name": "lemon",
-                    "color": ["green", "red"]
+                    "color": ["green", "red"],
+                    "expectation": "*"
                 },
                 {
                     "name": "orange",
-                    "color": "green"
+                    "color": "green",
+                    "expectation": "*"
                 }
             ]
         }
@@ -62,7 +68,7 @@ class GeneratorTestCase(unittest.TestCase):
                     "matches": {
                         "name": "non_empty_string",
                         "description": "non_empty_string",
-                        "test_expansion": "non_empty_list"
+                        "test_expansion": "non_empty_list",
                     },
                     "/test_expansion/*": {
                         "path": "%(_name)s/%(color)s-%(name)s.html",
@@ -70,19 +76,30 @@ class GeneratorTestCase(unittest.TestCase):
                         "action": "generate",
                         "matches": {
                             "name": "non_empty_string",
-                            "color": "@color_schema"
-                        }
+                            "color": "@color_schema",
+                            "expectation": "@expectation_schema"
+                        },
+                        "when": [{
+                            "match_any": [["%(color)s", "yellow"]],
+                            "do": [{
+                              "action": "generate",
+                              "path": "%(_name)s/%(color)s-%(name)s.html.headers",
+                              "template": "Sample-Header: %(color)s %(name)s"
+                            }]
+                          }]
                     }
                 },
                 "/excluded_tests/*": {
                     "action": "suppress",
                     "matches": {
                         "name": "non_empty_string",
-                        "color": "@color_schema"
+                        "color": "@color_schema",
+                        "expectation": "@expectation_schema"
                     }
                 }
             },
-            "#color_schema": ["red", "green", "yellow"]
+            "#color_schema": ["red", "green", "yellow"],
+            "#expectation_schema": ["sour", "sweet"]
         }
 
         g = generator.Generator(spec, schema, writer=MockWriter())
@@ -93,10 +110,14 @@ class GeneratorTestCase(unittest.TestCase):
                      'green pear is of the rose-type tree fruits.'),
                     ('citrus/yellow-lemon.html',
                      'yellow lemon is of the family Rutaceae.'),
+                    ('citrus/yellow-lemon.html.headers',
+                     'Sample-Header: yellow lemon'),
                     ('roses/green-apple.html',
                      'green apple is of the rose-type tree fruits.'),
                     ('citrus/yellow-orange.html',
                      'yellow orange is of the family Rutaceae.'),
+                    ('citrus/yellow-orange.html.headers',
+                     'Sample-Header: yellow orange'),
                     ('citrus/red-orange.html',
                      'red orange is of the family Rutaceae.'),
                     ('roses/red-pear.html',
@@ -104,9 +125,14 @@ class GeneratorTestCase(unittest.TestCase):
                     ('roses/red-apple.html',
                      'red apple is of the rose-type tree fruits.'),
                     ('roses/yellow-pear.html',
-                     'yellow pear is of the rose-type tree fruits.')]
+                     'yellow pear is of the rose-type tree fruits.'),
+                    ('roses/yellow-pear.html.headers',
+                     'Sample-Header: yellow pear')]
+
+        expected = sorted(expected)
+        self.assertEquals(len(expected), len(g.writer.fs))
         i = 0
-        for file_path, generated_value in g.writer.fs.iteritems():
+        for file_path, generated_value in sorted(g.writer.fs.iteritems()):
             self.assertEquals(expected[i], (file_path, generated_value))
             i+=1
 

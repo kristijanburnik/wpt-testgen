@@ -1,5 +1,5 @@
 from validator import Validator, SchemaError, SpecError
-from util import load_json
+from util import load_json, normalize_path
 import os
 import re
 
@@ -54,23 +54,62 @@ class Generator(object):
                 print "To be excluded", selection
                 self._excluded_selections[str(selection)] = True
 
-        selection_index = 0
+        selection_index = -1
         for expansion_node in self._traverse(None, self.spec,
                                              match_action="generate"):
+            selection_index += 1
             path, named_chain, pattern = expansion_node
             for selection in self._permute_pattern(pattern):
                 if str(selection) in self._excluded_selections:
                     print "Excluding", selection
                     continue
                 print "Generating", selection
-                extended_selection = self._extend(selection, named_chain, selection_index)
-                selection_index += 1
+                extended_selection = self._extend(selection,
+                                                  named_chain,
+                                                  selection_index)
+
+                # The generate action.
                 path_template = self._leafs[path]["path"]
                 content_template = self._resolve_template(
                     self._leafs[path]["template"], extended_selection)
                 file_path = path_template % extended_selection
                 content = content_template % extended_selection
                 self.writer.write(file_path, content)
+
+                # When clause handler.
+                when_rules = self._leafs[path]["when"]
+                if when_rules is None:
+                    continue
+
+                for when_rule in when_rules:
+                    match_any_clause = when_rule["match_any"]
+                    if not self._when_rule_match_any(match_any_clause,
+                                                     extended_selection):
+                        continue
+
+                    for do_rule in when_rule["do"]:
+                        action = do_rule["action"]
+                        if not action is "generate":
+                            continue
+
+                        # TODO(kristijanburnik): This is duplicated from above.
+                        path_template = do_rule["path"]
+                        content_template = self._resolve_template(
+                                do_rule["template"], extended_selection)
+                        file_path = path_template % extended_selection
+                        content = content_template % extended_selection
+                        self.writer.write(file_path, content)
+
+
+    def _when_rule_match_any(self, match_any_clause, extended_selection):
+        for term in match_any_clause:
+            first, second = term
+            first %= extended_selection
+            second %= extended_selection
+
+            if first == second:
+                return True
+        return False
 
     def _resolve_template(self, mixed, extended_selection):
         if isinstance(mixed, dict):
@@ -82,6 +121,9 @@ class Generator(object):
             # TODO(kristijanburnik): This is hacky and not very useful in
             # general. A template generating order and dependency should be part
             # of the language of testgen.
+            if len(mixed) == 1:
+                return template
+
             for template_key, filename_pattern in mixed.iteritems():
                 subtemplate_filename = filename_pattern % extended_selection
                 subtemplate = self.reader.read(subtemplate_filename, self.paths)
@@ -148,7 +190,7 @@ class Generator(object):
         for i in range(0, len(parts)):
             if self._re_integer_pattern.match(parts[i]):
                 parts[i] = "*"
-        return '//' + '/'.join(filter(None, parts))
+        return '/' + '/'.join(filter(None, parts))
 
     def _expand_pattern(self, pattern, generic_path):
         for k, v in pattern.iteritems():
@@ -188,7 +230,7 @@ class Generator(object):
             if not self._is_assoc(v):
                 continue
 
-            next_path = path + "/" + str(k)
+            next_path = normalize_path(path + "/" + str(k))
             next_generic_path = self._generalize_path(next_path)
 
             if "name" in v and not self._is_leaf(next_generic_path):

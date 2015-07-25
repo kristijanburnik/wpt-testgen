@@ -1,27 +1,27 @@
 {
   "/scenarios/*": {
-      "matches": {
-        "name": "non_empty_string",
-        "description": "non_empty_string",
-        "feature_enabled": ["no", "yes"],
-        "url": "@url_schema",
-        "expectation": ["allowed", "blocked"]
-      },
-      "action": "generate",
-      "path": "safe-links/%(expectation)s/%(__index__)s.html",
-      "template": {
-        "__main__": "safe-links/generic/template/test.html.template"
-      },
-
-      "when": [{
-        "match_any": [["%(feature_enabled)s", "yes"]],
-        "do": [{
-          "action": "generate",
-          "path": "safe-links/%(expectation)s/%(__index__)s.html.headers",
-          "template": "Enable-Navigation-Blocking: allowed-url http://safe.url https://safe.url"
-        }]
-      }]
-
+    "matches": "@scenario_schema",
+    "action": "generate",
+    "path": "%(expectation)s/%(__index__)s.html",
+    "template": {
+      "__main__": "generic/template/test.html.template"
     },
-    "#url_schema": ["http://safe.url", "https://safe.url", "http://unsafe.url"]
+
+    "when": [{
+      "match_any": [["%(feature_enabled)s", "yes"]],
+      "do": [{
+        "action": "generate",
+        "path": "%(expectation)s/%(__index__)s.html.headers",
+        "template": "Enable-Navigation-Blocking: allowed-url http://safe.url https://safe.url"
+      }]
+    }]
+  },
+  "#scenario_schema": {
+    "name": "non_empty_string",
+    "description": "non_empty_string",
+    "feature_enabled": ["no", "yes"],
+    "url": "@url_schema",
+    "expectation": ["allowed", "blocked"]
+  },
+  "#url_schema": ["http://safe.url", "https://safe.url", "http://unsafe.url"]
 }

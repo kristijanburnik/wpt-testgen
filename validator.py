@@ -149,19 +149,54 @@ class Validator(object):
                     self._rule_map[path] = []
                 self._rule_map[path].append((k, v))
             elif self._is_node(k):
-                self._create_rule_map(v, path + k)
+                self._create_rule_map(v, normalize_path(path + k))
             # TODO(kristijanburnik): Refactor leaf marker.
-            elif k == "path" or k == "template" or k == "action":
+            elif k in ["action", "path", "template", "when"]:
                 if not path in self.leafs:
                     self.leafs[path] = {"path": None,
                                         "template": None,
-                                        "action": None}
+                                        "action": None,
+                                        "when": None}
+                if k == "when":
+                    self._validate_when_rules(schema, k)
                 self.leafs[path][k] = v
-            elif k == "when":
-                print "NOTE: unimplemented when rule"
             else:
                 raise SchemaError('Invalid schema rule "%s" at "%s"' % \
                                   (k, path))
+
+    def _validate_when_rules(self, schema, key):
+        # TODO(kristijanburnik): This validation can be bootstraped to use
+        # validation rules with a well defined schema. Just as specifications
+        # are being validated, we can treat the when clauses the same.
+        try:
+            when_rules = schema[key]
+            assert_non_empty_list(schema, key)
+            # The only subset currently supported for when clauses.
+            allowed_action_values = ["generate"]
+            allowed_when_fields = ["match_any", "do"]
+            allowed_do_fields = ["action", "path", "template"]
+            i = 0;
+            for when_rule in when_rules:
+                assert_contains_only_fields(when_rule, allowed_when_fields)
+                assert_non_empty_dict(when_rules, i)
+                assert_non_empty_list(when_rule, "match_any")
+                for match_clause in when_rule["match_any"]:
+                    assert len(match_clause) == 2, \
+                           "Match clause must contain 2 values, %s" % \
+                           str(match_clause)
+                j = 0
+                do_rules = when_rule["do"]
+                assert_non_empty_list(when_rule, "do")
+                for do_rule in do_rules:
+                    assert_non_empty_dict(do_rules, j)
+                    assert_contains_only_fields(do_rule, allowed_do_fields)
+                    assert_string_from(do_rule, "action", allowed_action_values)
+                    assert_non_empty_string(do_rule, "template")
+                    assert_non_empty_string(do_rule, "path")
+                    j += 1
+                i += 1
+        except AssertionError, err:
+            raise SchemaError(err)
 
     def _validate(self, value, rule_map, path="/", error_details={}):
         error_details["path"] = path
@@ -186,7 +221,6 @@ class Validator(object):
             if isinstance(v, dict) or isinstance(v, list):
                 next_path = path + "/" + k
                 self._validate(v, rule_map, next_path, error_details)
-
 
 def main(args):
     spec = load_json(args.spec)

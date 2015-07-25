@@ -31,3 +31,6 @@ def load_json(path_to_file):
                 print read_nth_line(f, line_number).rstrip()
                 print " " * (column - 1) + "^"
             sys.exit(1)
+
+def normalize_path( path):
+        return '/' + '/'.join(filter(None, path.split('/')))

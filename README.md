@@ -147,7 +147,7 @@ specify a bit more in the schema to instruct the generator how to do it:
         "expectation": ["allowed", "blocked"]
       },
       "action": "generate",
-      "path": "safe-links/%(expectation)s/%(__index__)s.html"
+      "path": "%(expectation)s/%(__index__)s.html"
 
     },
     "#url_schema": ["http://safe.url", "https://safe.url", "http://unsafe.url"]
@@ -190,7 +190,7 @@ Now, we need a template file for our tests, let's do something very simple:
 <body>
   <script>
     var scenario = {
-      "name": "%(name)",
+      "name": "%(name)s",
       "description": "%(description)s",
       "feature_enabled": "%(feature_enabled)s",
       "url": "%(url)s",
@@ -247,10 +247,10 @@ We can then reference it by the schema:
         "expectation": ["allowed", "blocked"]
       },
       "action": "generate",
-      "path": "safe-links/%(expectation)s/%(__index__)s.html",
+      "path": "%(expectation)s/%(__index__)s.html",
 
       "template": {
-        "__main__": "safe-links/generic/template/test.html.template"
+        "__main__": "generic/template/test.html.template"
       }
 
     },
@@ -276,16 +276,16 @@ HTML:
         "expectation": ["allowed", "blocked"]
       },
       "action": "generate",
-      "path": "safe-links/%(expectation)s/%(__index__)s.html",
+      "path": "%(expectation)s/%(__index__)s.html",
       "template": {
-        "__main__": "safe-links/generic/template/test.html.template"
+        "__main__": "generic/template/test.html.template"
       },
 
       "when": [{
         "match_any": [["%(feature_enabled)s", "yes"]],
         "do": [{
           "action": "generate",
-          "path": "safe-links/%(expectation)s/%(__index__)s.html.headers",
+          "path": "%(expectation)s/%(__index__)s.html.headers",
           "template": "Enable-Navigation-Blocking: allowed-url http://safe.url https://safe.url"
         }]
       }]
@@ -444,16 +444,16 @@ And let's not forget the **Schema** `safe-links/safe-links.schema.json`:
         "expectation": ["allowed", "blocked"]
       },
       "action": "generate",
-      "path": "safe-links/%(expectation)s/%(__index__)s.html",
+      "path": "%(expectation)s/%(__index__)s.html",
       "template": {
-        "__main__": "safe-links/generic/template/test.html.template"
+        "__main__": "generic/template/test.html.template"
       },
 
       "when": [{
         "match_any": [["%(feature_enabled)s", "yes"]],
         "do": [{
           "action": "generate",
-          "path": "safe-links/%(expectation)s/%(__index__)s.html.headers",
+          "path": "%(expectation)s/%(__index__)s.html.headers",
           "template": "Enable-Navigation-Blocking: allowed-url http://safe.url https://safe.url"
         }]
       }]
@@ -571,15 +571,15 @@ Now we also have to update the **Schema**:
   "/scenarios/*": {
       "matches": "@scenario_schema",
       "action": "generate",
-      "path": "safe-links/%(expectation)s/%(__index__)s.html",
+      "path": "%(expectation)s/%(__index__)s.html",
       "template": {
-        "__main__": "safe-links/generic/template/test.html.template"
+        "__main__": "generic/template/test.html.template"
       },
       "when": [{
         "match_any": [["%(feature_enabled)s", "yes"]],
         "do": [{
           "action": "generate",
-          "path": "safe-links/%(expectation)s/%(__index__)s.html.headers",
+          "path": "%(expectation)s/%(__index__)s.html.headers",
           "template": "Enable-Navigation-Blocking: allowed-url http://safe.url https://safe.url"
         }]
       }]

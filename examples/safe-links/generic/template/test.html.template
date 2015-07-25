@@ -9,7 +9,7 @@
 <body>
   <script>
     var scenario = {
-      "name": "%(name)",
+      "name": "%(name)s",
       "description": "%(description)s",
       "feature_enabled": "%(feature_enabled)s",
       "url": "%(url)s",
