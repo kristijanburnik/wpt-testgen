@@ -1,5 +1,7 @@
 # WPT TestGen
 
+![travis-build](https://travis-ci.org/kristijanburnik/wpt-testgen.svg?branch=master)
+
 ## Tools for specifying and generating Web Platform Tests
 
 WPT TestGen is a set of tools for specifying test scenarios by using a higher
