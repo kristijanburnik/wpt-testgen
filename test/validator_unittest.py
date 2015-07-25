@@ -96,10 +96,11 @@ class ValidatorTestCase(unittest.TestCase):
             }
         }}
         validator = self.assert_valid(spec, schema)
-        self.assertEquals(validator.leafs["//specification/*"],
+        self.assertEquals(validator.leafs["/specification/*"],
                           {"path": "%(name)s",
                            "template": "Hello, %(name)s",
-                           "action": "include"})
+                           "action": "include",
+                           "when": None})
 
     def test_level2InvalidSpecEmptyString_fails(self):
         spec = {"specification" : [{"name": "Sample1"},
@@ -321,7 +322,7 @@ class ValidatorTestCase(unittest.TestCase):
         spec = {"myspec": []}
         schema = {}
         self.assert_invalid(spec, schema, SpecError,
-                            'No schema rule for path "//myspec"')
+                            'No schema rule for path "/myspec"')
 
     def test_invalidSchemaNode_fails(self):
         spec = {"myspec": []}
@@ -329,7 +330,7 @@ class ValidatorTestCase(unittest.TestCase):
                     "/myspec": "non_empty_list"
                   }}
         self.assert_invalid(spec, schema, SpecError,
-                            'Value at schema path "//myspec" must be a dict')
+                            'Value at schema path "/myspec" must be a dict')
     def test_invalidMatchesParameter_fails(self):
         spec = {"myspec": []}
         schema = {"/": {

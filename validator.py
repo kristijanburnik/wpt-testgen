@@ -57,7 +57,8 @@ class Validator(object):
                     else:
                         continue
 
-                    self.meta_schema_map[path + "/" + k] = valid_values
+                    self.meta_schema_map[normalize_path(path + "/" + k)] = \
+                        valid_values
 
         self._validate(self.spec, self._rule_map, error_details=error_details)
 
@@ -199,6 +200,7 @@ class Validator(object):
             raise SchemaError(err)
 
     def _validate(self, value, rule_map, path="/", error_details={}):
+        path = normalize_path(path)
         error_details["path"] = path
         error_details["value"] = value
         if len(rule_map.keys()) == 0 and path != "/":
