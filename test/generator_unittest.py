@@ -18,11 +18,13 @@ class GeneratorTestCase(unittest.TestCase):
                     "description": "the family Rutaceae.",
                     "test_expansion": [
                         {
+                            "__comment__": "Oranges, oranges everywhere.",
                             "name": "orange",
                             "color": "*",
-                            "expectation": "sour"
+                            "expectation": "sweet"
                         },
                         {
+                            "__comment__": "Squeeze me a lemonde.",
                             "name": "lemon",
                             "color": "*",
                             "expectation": "sour"
@@ -34,11 +36,13 @@ class GeneratorTestCase(unittest.TestCase):
                     "description": "the rose-type tree fruits.",
                     "test_expansion": [
                         {
+                            "__comment__": "Pears are cool.",
                             "name": "pear",
                             "color": "*",
                             "expectation": "sweet"
                         },
                         {
+                            "__comment__": "Apples are fine.",
                             "name": "apple",
                             "color": ["red", "green"],
                             "expectation": "sweet"
@@ -48,11 +52,13 @@ class GeneratorTestCase(unittest.TestCase):
             ],
             "excluded_tests": [
                 {
+                    "__comment__": "Green and red lemons are a no-go.",
                     "name": "lemon",
                     "color": ["green", "red"],
                     "expectation": "*"
                 },
                 {
+                    "__comment__": "I don't eat green oranges.",
                     "name": "orange",
                     "color": "green",
                     "expectation": "*"
@@ -74,11 +80,7 @@ class GeneratorTestCase(unittest.TestCase):
                         "path": "%(_name)s/%(color)s-%(name)s.html",
                         "template": "%(color)s %(name)s is of %(_description)s",
                         "action": "generate",
-                        "matches": {
-                            "name": "non_empty_string",
-                            "color": "@color_schema",
-                            "expectation": "@expectation_schema"
-                        },
+                        "matches": "@scenario_schema",
                         "when": [{
                             "match_any": [["%(color)s", "yellow"]],
                             "do": [{
@@ -91,14 +93,15 @@ class GeneratorTestCase(unittest.TestCase):
                 },
                 "/excluded_tests/*": {
                     "action": "suppress",
-                    "matches": {
-                        "name": "non_empty_string",
-                        "color": "@color_schema",
-                        "expectation": "@expectation_schema"
-                    }
+                    "matches": "@scenario_schema"
                 }
             },
             "#color_schema": ["red", "green", "yellow"],
+            "#scenario_schema": {
+                "name": "non_empty_string",
+                "color": "@color_schema",
+                "expectation": "@expectation_schema"
+            },
             "#expectation_schema": ["sour", "sweet"]
         }
 
