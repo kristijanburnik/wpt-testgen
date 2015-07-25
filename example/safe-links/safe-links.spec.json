@@ -1,0 +1,11 @@
+{
+  "tests": [
+    {
+      "name": "allowed-when-feature-not-enabled",
+      "description": "All navigations allowed if feature is disabled.",
+      "feature_enabled": "no",
+      "url": "*",
+      "expectation": "allowed"
+    }
+  ]
+}

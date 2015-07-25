@@ -63,15 +63,17 @@ Let's test if the browser is allowing all navigations if the feature is
 disabled. We can write the whole scenario by a single expansion pattern:
 
 ```json
-// ...
 {
-  "name": "allowed-when-feature-not-enabled",
-  "description": "All navigations allowed if feature is disabled.",
-  "feature_enabled": "no",
-  "url": "*",
-  "expectation": "allowed"
+  "tests": [
+    {
+      "name": "allowed-when-feature-not-enabled",
+      "description": "All navigations allowed if feature is disabled.",
+      "feature_enabled": "no",
+      "url": "*",
+      "expectation": "allowed"
+    }
+  ]
 }
-// ...
 
 ```
 
@@ -81,7 +83,7 @@ and define which values we can use and expand into:
 ```json
 // ...
 {
-  "/*": {
+  "/tests/*": {
     "matches": {
       "name": "non_empty_string",
       "description": "non_empty_string",
@@ -139,7 +141,7 @@ specify a bit more in the schema to instruct the generator how to do it:
 ```json
 // ...
 {
-  "/*": {
+  "/tests/*": {
       "matches": {
         "name": "non_empty_string",
         "description": "non_empty_string",
@@ -156,9 +158,10 @@ specify a bit more in the schema to instruct the generator how to do it:
 // ...
 ```
 
-The "/\*" key matches each value in the root node "/" of the specification json.
-The "\*" part of the key is a for-each substitution (i.e. for each value in an
-array).
+The "/tests/\*" key matches each value in the path starting from the root node
+"/" of the specification json.
+The "\*" part of the key is a for-each substitution (i.e. for each value in the
+"tests" array).
 
 The keyword ```matches``` is used to specify valid values which can live in the
 JSON node.

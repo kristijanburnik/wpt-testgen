@@ -1,0 +1,22 @@
+<html>
+<head>
+  <title>%(name)s</title>
+  <meta name="description" content="%(description)s">
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/safe-links/generic/safe-links-test-case.js"></script>
+</head>
+<body>
+  <script>
+    var scenario = {
+      "name": "%(name)",
+      "description": "%(description)s",
+      "feature_enabled": "%(feature_enabled)s",
+      "url": "%(url)s",
+      "expectation": "%(expectation)s"
+    };
+    SafeLinksTestCase(scenario).start();
+ </script>
+</body>
+</html>
+
