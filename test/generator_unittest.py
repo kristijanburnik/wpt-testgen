@@ -127,7 +127,7 @@ class GeneratorTestCase(unittest.TestCase):
 
         self.assert_generated(expected, generated=g.writer.fs)
 
-    def x_test_comments(self):
+    def test_comments(self):
         spec = {
           "scenarios": [
             {

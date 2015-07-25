@@ -160,7 +160,10 @@ class Generator(object):
         for selection in self._permute(pattern, pattern.keys()):
             yield selection
 
-    def _permute(self, pattern, key_order=[], key_index=0, selection={}):
+    def _permute(self, pattern, key_order=[], key_index=0, selection=None):
+        if selection is None:
+            selection = {}
+
         if key_index >= len(key_order):
             yield selection
             return
