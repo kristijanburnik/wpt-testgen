@@ -157,6 +157,8 @@ class Validator(object):
                                         "template": None,
                                         "action": None}
                 self.leafs[path][k] = v
+            elif k == "when":
+                print "NOTE: unimplemented when rule"
             else:
                 raise SchemaError('Invalid schema rule "%s" at "%s"' % \
                                   (k, path))

@@ -203,15 +203,15 @@ class Generator(object):
                 yield expansion_node
 
 def main(args):
-    import json
+    import json, sys
     # Grab the spec's and schema's path.
     search_paths = {}
-    for filename in [args.spec, args.validation_schema]:
+    for filename in [args.spec, args.schema]:
         path = os.path.abspath(os.path.dirname(os.path.expanduser(filename)))
         search_paths[path] = True
 
     spec = load_json(args.spec)
-    schema = load_json(args.validation_schema)
+    schema = load_json(args.schema)
     writer = OutputWriter() if not args.dryrun else DryRunWritter()
     reader = FileReader()
     generator = Generator(spec, schema,
