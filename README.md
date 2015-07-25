@@ -159,14 +159,15 @@ The "/scenarios/\*" key matches each value in the path starting from the root no
 The "\*" part of the key is a for-each substitution (i.e. for each value in the
 "scenarios" array).
 
-The keyword ```matches``` is used to specify valid values which can live in the
+The keyword `matches` is used to specify valid values which can live in the
 JSON node.
 
-The keyword ```action``` specifies what is to be done with this node in the
-JSON. Here we want to `generate` a file for all nodes at level "/\*". Other
-possible value would be `suppress` indicating to skip a scenario when matched.
+The keyword `action` specifies what is to be done with this node in the
+JSON. Here we want to `generate` a file for all nodes at level "/scenario/\*".
+Other possible value would be `suppress` indicating to skip a scenario when
+matched.
 
-You've guessed it! The ```path``` is used to define a substitution template
+You've guessed it! The `path` is used to define a substitution template
 for the path in which we place the test. In this case we will end up having:
 
 * safe-links/allowed/0.html
