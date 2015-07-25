@@ -5,9 +5,26 @@
 WPT TestGen is a set of tools for specifying test scenarios by using a higher
 level language.
 
+# Installation
+
+Clone the repository:
+
+```bash
+cd ~
+git clone https://github.com/kristijanburnik/wpt-testgen.git
+```
+
+Add to path:
+
+```bash
+echo 'PATH=$PATH:$HOME/wpt-testgen' >> ~/.bashrc && . ~/.bashrc
+```
+
+# Getting started
+
 The principle for this approach to writing tests is that one should be able to
 briefly describe the scenarios and expectations for tests without having to deal
-with too much boilerplate and keep the test suite easier to maintain.
+with too much boilerplate while keeping the test suite easier to maintain.
 
 An author can start of by writing two files, a **Specification** and  a
 **Schema**.
@@ -102,7 +119,7 @@ them by "@".
 
 ## Generating the Tests
 
-By running the ```generator.py```, behind the scenes we expand our pattern to 3
+By running the ```testgen```, behind the scenes we expand our pattern to 3
 concrete scenarios (notice the different URL):
 
 ```json
@@ -467,7 +484,7 @@ And let's not forget the **Schema** `safe-links/safe-links.schema.json`:
 We generate the tests by running:
 
 ```bash
-python generator.py -s safe-links.spec.json -v safe-links.schema.json
+python testgen -s safe-links.spec.json -v safe-links.schema.json
 ```
 
 The files generated for these scenarios are:
