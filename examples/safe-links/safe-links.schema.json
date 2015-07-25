@@ -6,7 +6,6 @@
     "template": {
       "__main__": "generic/template/test.html.template"
     },
-
     "when": [{
       "match_any": [["%(feature_enabled)s", "yes"]],
       "do": [{

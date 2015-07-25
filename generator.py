@@ -57,9 +57,9 @@ class Generator(object):
         selection_index = -1
         for expansion_node in self._traverse(None, self.spec,
                                              match_action="generate"):
-            selection_index += 1
             path, named_chain, pattern = expansion_node
             for selection in self._permute_pattern(pattern):
+                selection_index += 1
                 if str(selection) in self._excluded_selections:
                     print "Excluding", selection
                     continue
@@ -89,7 +89,7 @@ class Generator(object):
 
                     for do_rule in when_rule["do"]:
                         action = do_rule["action"]
-                        if not action is "generate":
+                        if action != "generate":
                             continue
 
                         # TODO(kristijanburnik): This is duplicated from above.
@@ -102,11 +102,9 @@ class Generator(object):
 
 
     def _when_rule_match_any(self, match_any_clause, extended_selection):
-        for term in match_any_clause:
-            first, second = term
+        for first, second in match_any_clause:
             first %= extended_selection
             second %= extended_selection
-
             if first == second:
                 return True
         return False
