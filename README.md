@@ -602,9 +602,10 @@ Now we also have to update the **Schema**:
 Notice how we reused our scenario schema by refactoring it into a meta schema
 called `#scenario_schema`.
 
-Suppressing the tests is of an action of higher priority than generating.
-The generator will output which scenarios are being suppressed.
+Take note that suppressing the tests is an action of higher priority than
+generating.
 
+--
 
 Browse the entire
 [safe-links](https://github.com/kristijanburnik/wpt-testgen/tree/master/examples/safe-links/) example.
