@@ -387,7 +387,7 @@ it:
 // ...
 ```
 
-By now, you can infer that the `url` section will expand into two possible
+One could easily spot that the `url` section will expand into two possible
 values: `https://safe.url` and `http://safe.url`, resulting in two concrete
 scenarios.
 
