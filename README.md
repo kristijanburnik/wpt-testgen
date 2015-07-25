@@ -64,7 +64,7 @@ disabled. We can write the whole scenario by a single expansion pattern:
 
 ```json
 {
-  "tests": [
+  "scenarios": [
     {
       "name": "allowed-when-feature-not-enabled",
       "description": "All navigations allowed if feature is disabled.",
@@ -83,7 +83,7 @@ and define which values we can use and expand into:
 ```json
 // ...
 {
-  "/tests/*": {
+  "/scenarios/*": {
     "matches": {
       "name": "non_empty_string",
       "description": "non_empty_string",
@@ -141,7 +141,7 @@ specify a bit more in the schema to instruct the generator how to do it:
 ```json
 // ...
 {
-  "/tests/*": {
+  "/scenarios/*": {
       "matches": {
         "name": "non_empty_string",
         "description": "non_empty_string",
@@ -158,10 +158,10 @@ specify a bit more in the schema to instruct the generator how to do it:
 // ...
 ```
 
-The "/tests/\*" key matches each value in the path starting from the root node
+The "/scenarios/\*" key matches each value in the path starting from the root node
 "/" of the specification json.
 The "\*" part of the key is a for-each substitution (i.e. for each value in the
-"tests" array).
+"scenarios" array).
 
 The keyword ```matches``` is used to specify valid values which can live in the
 JSON node.
@@ -242,7 +242,7 @@ We can then reference it by the schema:
 
 ```json
 {
-  "/*": {
+  "/scenarios/*": {
       "matches": {
         "name": "non_empty_string",
         "description": "non_empty_string",
@@ -271,7 +271,7 @@ HTML:
 
 ```json
 {
-  "/*": {
+  "/scenarios/*": {
       "matches": {
         "name": "non_empty_string",
         "description": "non_empty_string",

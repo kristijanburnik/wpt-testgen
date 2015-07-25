@@ -1,5 +1,5 @@
 {
-  "tests": [
+  "scenarios": [
     {
       "name": "allowed-when-feature-not-enabled",
       "description": "All navigations allowed if feature is disabled.",
