@@ -59,7 +59,7 @@ Enable-Navigation-Blocking: allowed-url http://some.url
 
 We could start testing with something very basic.
 
-Let's test if the browser is allowing all navigations if the feature is
+Let's test if the browser is allowing all navigations when the feature is
 disabled. We can write the whole scenario by a single expansion pattern:
 
 ```json
@@ -77,8 +77,8 @@ disabled. We can write the whole scenario by a single expansion pattern:
 
 ```
 
-We can specify by the schema what the valid values are,
-and define which values we can use and expand into:
+With the schema, one can specify what the specification should look like -
+define which values we can use and expand into:
 
 ```json
 {
