@@ -1,5 +1,5 @@
 from validator import Validator, SchemaError, SpecError
-from util import load_json, normalize_path
+from util import load_json, normalize_path, filter_comments
 import os
 import re
 
@@ -51,8 +51,9 @@ class Generator(object):
                                              match_action="suppress"):
             path, named_chain, pattern = expansion_node
             for selection in self._permute_pattern(pattern):
-                print "To be excluded", selection
-                self._excluded_selections[str(selection)] = True
+                serialized_selection = self._serialize(selection)
+                print "To be excluded", serialized_selection
+                self._excluded_selections[serialized_selection] = True
 
         selection_index = -1
         for expansion_node in self._traverse(None, self.spec,
@@ -60,7 +61,8 @@ class Generator(object):
             path, named_chain, pattern = expansion_node
             for selection in self._permute_pattern(pattern):
                 selection_index += 1
-                if str(selection) in self._excluded_selections:
+                serialized_selection = self._serialize(selection)
+                if serialized_selection in self._excluded_selections:
                     print "Excluding", selection
                     continue
                 print "Generating", selection
@@ -100,6 +102,11 @@ class Generator(object):
                         content = content_template % extended_selection
                         self.writer.write(file_path, content)
 
+
+    def _serialize(self, selection):
+        # TODO(kristijanburnik): this is a hack to omit names. It should be
+        # documented or there should be a way to specify which patterns match.
+        return str(filter_comments(selection))
 
     def _when_rule_match_any(self, match_any_clause, extended_selection):
         for first, second in match_any_clause:

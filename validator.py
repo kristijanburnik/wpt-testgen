@@ -89,17 +89,6 @@ class Validator(object):
                 raise SchemaError("Invalid meta schema reference '%s'" % token)
         return meta_schema
 
-    def _filter_comments(self, mixed):
-        if isinstance(mixed, dict):
-            for key in mixed.keys():
-                if key.startswith('__'):
-                    del mixed[key]
-            return mixed
-        elif isinstance(mixed, list):
-            return filter(lambda key: not key.startswith('__'), mixed)
-        else:
-            return mixed
-
     def _assert_matches(self, expectation, value):
         if not isinstance(expectation, dict):
             raise SchemaError("Schema rule \"matches\" expects a dict " + \
@@ -142,7 +131,6 @@ class Validator(object):
         try:
             if rule in self._rule_method:
                 rule_method = self._rule_method[rule]
-                value = self._filter_comments(value)
                 rule_method(expectation, value)
             else:
                 raise NotReachedError(rule)

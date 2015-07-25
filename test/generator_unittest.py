@@ -3,14 +3,15 @@ import unittest
 import generator
 
 class MockWriter(object):
-    fs = {}
+    def __init__(self):
+        self.fs = {}
 
     def write(self, filename, content):
         self.fs[filename] = content
 
 class GeneratorTestCase(unittest.TestCase):
 
-    def test_simple_generatesSelection(self):
+    def __test_simple_generatesSelection(self):
         spec = {
             "specification": [
                 {
@@ -106,7 +107,6 @@ class GeneratorTestCase(unittest.TestCase):
         }
 
         g = generator.Generator(spec, schema, writer=MockWriter())
-
         g.generate()
 
         expected = [('roses/green-pear.html',
@@ -132,12 +132,91 @@ class GeneratorTestCase(unittest.TestCase):
                     ('roses/yellow-pear.html.headers',
                      'Sample-Header: yellow pear')]
 
+        self.assert_generated(expected, g.writer.fs)
+
+    def test_comments(self):
+        spec = {
+          "scenarios": [
+            {
+              "name": "allowed-when-feature-not-enabled",
+              "description": "All navigations allowed if feature is disabled.",
+              "feature_enabled": "no",
+              "url": "*",
+              "expectation": "allowed"
+            },
+            {
+              "name": "blocked-when-feature-enabled",
+              "description": "Unsafe URLs blocked when feature is enabled",
+              "feature_enabled": "yes",
+              "url": "http://unsafe.url",
+              "expectation": "blocked"
+            },
+            {
+              "name": "allowed-when-feature-enabled",
+              "description": "Safe URLs allowed when feature is enabled",
+              "feature_enabled": "yes",
+              "url": ["https://safe.url", "http://safe.url"],
+              "expectation": "allowed"
+            }
+          ],
+          "skip": [
+             {
+              "name": "Temporarily ignore allowed.",
+              "description": "n/a",
+              "feature_enabled": "*",
+              "url": "*",
+              "expectation": "allowed"
+            }
+          ]
+        }
+
+        schema = {
+          "/scenarios/*": {
+            "matches": "@scenario_schema",
+            "action": "generate",
+            "path": "%(expectation)s/%(__index__)s.html",
+            "template": "%(name)s; %(feature_enabled)s; %(url)s; %(expectation)s;",
+            "when": [{
+              "match_any": [["%(feature_enabled)s", "yes"]],
+              "do": [{
+                "action": "generate",
+                "path": "%(expectation)s/%(__index__)s.html.headers",
+                "template": "Enable-Navigation-Blocking: allowed-url http://safe.url https://safe.url"
+              }]
+            }]
+          },
+          "/skip/*": {
+              "matches": "@scenario_schema",
+              "action": "suppress"
+          },
+          "#scenario_schema": {
+            "name": "non_empty_string",
+            "description": "non_empty_string",
+            "feature_enabled": ["no", "yes"],
+            "url": "@url_schema",
+            "expectation": ["allowed", "blocked"]
+          },
+          "#url_schema": ["http://safe.url", "https://safe.url", "http://unsafe.url"]
+        }
+
+        g = generator.Generator(spec, schema, writer=MockWriter())
+        g.generate()
+
+        expected = [('blocked/3.html',
+                     'blocked-when-feature-enabled; yes; http://unsafe.url; blocked;'),
+                    ('blocked/3.html.headers',
+                     'Enable-Navigation-Blocking: allowed-url http://safe.url https://safe.url')]
+
+        self.assert_generated(expected, generated=g.writer.fs)
+
+    def assert_generated(self, expected, generated):
+        self.assertEquals(len(expected), len(generated))
         expected = sorted(expected)
-        self.assertEquals(len(expected), len(g.writer.fs))
         i = 0
-        for file_path, generated_value in sorted(g.writer.fs.iteritems()):
+        for file_path, generated_value in sorted(generated.iteritems()):
             self.assertEquals(expected[i], (file_path, generated_value))
             i+=1
+
 
 if __name__ == '__main__':
     unittest.main()

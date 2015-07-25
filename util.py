@@ -34,3 +34,17 @@ def load_json(path_to_file):
 
 def normalize_path( path):
         return '/' + '/'.join(filter(None, path.split('/')))
+
+def filter_comments(mixed):
+    lambda_filter = lambda key: not key.startswith('__') and \
+                                not key in ["name", "description"]
+    if isinstance(mixed, dict):
+        out = {}
+        for key, value in mixed.iteritems():
+            if lambda_filter(key):
+                out[key] = value
+        return out
+    elif isinstance(mixed, list):
+        return filter(lambda_filter, mixed)
+    else:
+        return mixed
