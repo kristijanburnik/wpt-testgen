@@ -287,9 +287,11 @@ HTML:
 
       "when": [{
         "match_any": [["%(feature_enabled)s", "yes"]],
-        "action": "generate",
-        "path": "safe-links/%(expectation)s/%(__index__)s.html.headers",
-        "template": "Enable-Navigation-Blocking: allowed-url http://safe.url https://safe.url"
+        "do": [{
+          "action": "generate",
+          "path": "safe-links/%(expectation)s/%(__index__)s.html.headers",
+          "template": "Enable-Navigation-Blocking: allowed-url http://safe.url https://safe.url"
+        }]
       }]
 
     },
