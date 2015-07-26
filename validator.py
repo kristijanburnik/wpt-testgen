@@ -156,12 +156,14 @@ class Validator(object):
             elif self._is_node(k):
                 self._create_rule_map(v, normalize_path(path + k))
             # TODO(kristijanburnik): Refactor leaf marker.
-            elif k in ["action", "path", "template", "when"]:
+            elif k in ["action", "path", "template", "when",
+                       "extensions"]:
                 if not path in self.leafs:
                     self.leafs[path] = {"path": None,
                                         "template": None,
                                         "action": None,
-                                        "when": None}
+                                        "when": None,
+                                        "extensions": None}
                 if k == "when":
                     self._validate_when_rules(schema, k)
                 self.leafs[path][k] = v
@@ -177,9 +179,12 @@ class Validator(object):
             when_rules = schema[key]
             assert_non_empty_list(schema, key)
             # The only subset currently supported for when clauses.
-            allowed_action_values = ["generate"]
+            allowed_action_values = ["generate", "set_extension"]
             allowed_when_fields = ["match_any", "do"]
-            allowed_do_fields = ["action", "path", "template"]
+            allowed_do_fields_map = {"generate": ["action", "path", "template"],
+                                     "set_extension": ["action",
+                                                       "key",
+                                                       "template"]}
             i = 0;
             for when_rule in when_rules:
                 assert_contains_only_fields(when_rule, allowed_when_fields)
@@ -194,10 +199,12 @@ class Validator(object):
                 assert_non_empty_list(when_rule, "do")
                 for do_rule in do_rules:
                     assert_non_empty_dict(do_rules, j)
-                    assert_contains_only_fields(do_rule, allowed_do_fields)
                     assert_string_from(do_rule, "action", allowed_action_values)
-                    assert_non_empty_string(do_rule, "template")
-                    assert_non_empty_string(do_rule, "path")
+
+                    allowed_do_fields = allowed_do_fields_map[do_rule["action"]]
+                    assert_contains_only_fields(do_rule, allowed_do_fields)
+                    for allowed_do_field in allowed_do_fields:
+                        assert_non_empty_string(do_rule, allowed_do_field)
                     j += 1
                 i += 1
         except AssertionError, err:

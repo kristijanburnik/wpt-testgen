@@ -66,9 +66,43 @@ class Generator(object):
                     print "Excluding", selection
                     continue
                 print "Generating", selection
+                extensions = self._leafs[path]["extensions"]
                 extended_selection = self._extend(selection,
                                                   named_chain,
-                                                  selection_index)
+                                                  selection_index,
+                                                  extensions)
+
+                # When clause handler.
+                when_rules = self._leafs[path]["when"]
+                if not when_rules is None:
+                    for when_rule in when_rules:
+                        match_any_clause = when_rule["match_any"]
+                        if not self._when_rule_match_any(match_any_clause,
+                                                         extended_selection):
+                            continue
+
+                        for do_rule in when_rule["do"]:
+                            action = do_rule["action"]
+
+                            if action == "generate":
+                                # TODO(kristijanburnik): This is duplicated from below.
+                                path_template = do_rule["path"]
+                                content_template = self._resolve_template(
+                                        do_rule["template"], extended_selection)
+                                file_path = self._produce(path_template, extended_selection)
+                                content = self._produce(content_template,
+                                                        extended_selection,
+                                                        reference=do_rule["template"])
+                                self.writer.write(file_path, content)
+                            elif action == "set_extension":
+                                content_template = self._resolve_template(
+                                        do_rule["template"], extended_selection)
+                                content = self._produce(content_template,
+                                                        extended_selection,
+                                                        reference=do_rule["template"])
+                                extended_selection[do_rule["key"]] = content
+                            else:
+                                raise ValueError("Invalid do action: %s" % action)
 
                 # The generate action.
                 path_template = self._leafs[path]["path"]
@@ -83,31 +117,6 @@ class Generator(object):
                                         check_produces=False)
                 self.writer.write(file_path, content)
 
-                # When clause handler.
-                when_rules = self._leafs[path]["when"]
-                if when_rules is None:
-                    continue
-
-                for when_rule in when_rules:
-                    match_any_clause = when_rule["match_any"]
-                    if not self._when_rule_match_any(match_any_clause,
-                                                     extended_selection):
-                        continue
-
-                    for do_rule in when_rule["do"]:
-                        action = do_rule["action"]
-                        if action != "generate":
-                            continue
-
-                        # TODO(kristijanburnik): This is duplicated from above.
-                        path_template = do_rule["path"]
-                        content_template = self._resolve_template(
-                                do_rule["template"], extended_selection)
-                        file_path = self._produce(path_template, extended_selection)
-                        content = self._produce(content_template,
-                                                extended_selection,
-                                                reference=do_rule["template"])
-                        self.writer.write(file_path, content)
 
     def _produce(self, template, values, reference="inline",
                  check_produces=False):
@@ -169,15 +178,22 @@ class Generator(object):
         else:
             return mixed
 
-    def _extend(self, selection, named_chain, selection_index):
+    def _extend(self, selection, named_chain, selection_index,
+                extensions=None):
         """Populates selection with reference to parent nodes in spec.
-           Values are prefixed with _ for each level."""
-        expanded = {
+           Values are prefixed with _ for each level. Default extensions can
+           also be specified by the schema"""
+
+        expanded = {}
+        if not extensions is None:
+            expanded.update(extensions)
+
+        expanded.update({
             "__mode__": self.mode,
             "__index__": selection_index
-        }
-        for k, v in selection.iteritems():
-            expanded[k] = v
+        })
+
+        expanded.update(selection)
 
         prefix = "_"
         for ancestor in reversed(named_chain):
