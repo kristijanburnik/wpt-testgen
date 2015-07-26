@@ -75,10 +75,12 @@ class Generator(object):
                 content_template = self._resolve_template(
                     self._leafs[path]["template"], extended_selection)
                 file_path = self._produce(path_template,
-                                          extended_selection)
+                                          extended_selection,
+                                          check_produces=False)
                 content = self._produce(content_template,
                                         extended_selection,
-                                        reference=self._leafs[path]["template"])
+                                        reference=self._leafs[path]["template"],
+                                        check_produces=False)
                 self.writer.write(file_path, content)
 
                 # When clause handler.
@@ -108,7 +110,7 @@ class Generator(object):
                         self.writer.write(file_path, content)
 
     def _produce(self, template, values, reference="inline",
-                 check_produces=True):
+                 check_produces=False):
         try:
             produced_value = template % values
             if check_produces and produced_value == template:
