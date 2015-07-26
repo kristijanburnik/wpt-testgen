@@ -100,7 +100,8 @@ class ValidatorTestCase(unittest.TestCase):
                           {"path": "%(name)s",
                            "template": "Hello, %(name)s",
                            "action": "include",
-                           "when": None})
+                           "when": None,
+                           "extensions": None})
 
     def test_level2InvalidSpecEmptyString_fails(self):
         spec = {"specification" : [{"name": "Sample1"},
