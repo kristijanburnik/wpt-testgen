@@ -74,35 +74,7 @@ class Generator(object):
 
                 # When clause handler.
                 when_rules = self._leafs[path]["when"]
-                if not when_rules is None:
-                    for when_rule in when_rules:
-                        match_any_clause = when_rule["match_any"]
-                        if not self._when_rule_match_any(match_any_clause,
-                                                         extended_selection):
-                            continue
-
-                        for do_rule in when_rule["do"]:
-                            action = do_rule["action"]
-
-                            if action == "generate":
-                                # TODO(kristijanburnik): This is duplicated from below.
-                                path_template = do_rule["path"]
-                                content_template = self._resolve_template(
-                                        do_rule["template"], extended_selection)
-                                file_path = self._produce(path_template, extended_selection)
-                                content = self._produce(content_template,
-                                                        extended_selection,
-                                                        reference=do_rule["template"])
-                                self.writer.write(file_path, content)
-                            elif action == "set_extension":
-                                content_template = self._resolve_template(
-                                        do_rule["template"], extended_selection)
-                                content = self._produce(content_template,
-                                                        extended_selection,
-                                                        reference=do_rule["template"])
-                                extended_selection[do_rule["key"]] = content
-                            else:
-                                raise ValueError("Invalid do action: %s" % action)
+                self._run_when_rules(when_rules, extended_selection)
 
                 # The generate action.
                 path_template = self._leafs[path]["path"]
@@ -117,6 +89,38 @@ class Generator(object):
                                         check_produces=False)
                 self.writer.write(file_path, content)
 
+    def _run_when_rules(self, when_rules, extended_selection):
+        if when_rules is None:
+            return
+
+        for when_rule in when_rules:
+            match_any_clause = when_rule["match_any"]
+            if not self._when_rule_match_any(match_any_clause,
+                                             extended_selection):
+                continue
+
+            for do_rule in when_rule["do"]:
+                action = do_rule["action"]
+
+                if action == "generate":
+                    # TODO(kristijanburnik): This is duplicated from below.
+                    path_template = do_rule["path"]
+                    content_template = self._resolve_template(
+                            do_rule["template"], extended_selection)
+                    file_path = self._produce(path_template, extended_selection)
+                    content = self._produce(content_template,
+                                            extended_selection,
+                                            reference=do_rule["template"])
+                    self.writer.write(file_path, content)
+                elif action == "set_extension":
+                    content_template = self._resolve_template(
+                            do_rule["template"], extended_selection)
+                    content = self._produce(content_template,
+                                            extended_selection,
+                                            reference=do_rule["template"])
+                    extended_selection[do_rule["key"]] = content
+                else:
+                    raise ValueError("Invalid do action: %s" % action)
 
     def _produce(self, template, values, reference="inline",
                  check_produces=False):
