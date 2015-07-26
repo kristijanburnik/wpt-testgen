@@ -1,4 +1,4 @@
-from validator import Validator, SchemaError, SpecError
+from validator import Validator, SchemaError, SpecError, TemplateError
 from util import load_json, normalize_path, filter_comments
 import os
 import re
@@ -74,8 +74,11 @@ class Generator(object):
                 path_template = self._leafs[path]["path"]
                 content_template = self._resolve_template(
                     self._leafs[path]["template"], extended_selection)
-                file_path = path_template % extended_selection
-                content = content_template % extended_selection
+                file_path = self._produce(path_template,
+                                          extended_selection)
+                content = self._produce(content_template,
+                                        extended_selection,
+                                        reference=self._leafs[path]["template"])
                 self.writer.write(file_path, content)
 
                 # When clause handler.
@@ -98,9 +101,30 @@ class Generator(object):
                         path_template = do_rule["path"]
                         content_template = self._resolve_template(
                                 do_rule["template"], extended_selection)
-                        file_path = path_template % extended_selection
-                        content = content_template % extended_selection
+                        file_path = self._produce(path_template, extended_selection)
+                        content = self._produce(content_template,
+                                                extended_selection,
+                                                reference=do_rule["template"])
                         self.writer.write(file_path, content)
+
+    def _produce(self, template, values, reference="inline",
+                 check_produces=True):
+        try:
+            produced_value = template % values
+            if check_produces and produced_value == template:
+                raise TemplateError("Template did not produce a value:\n%s" % \
+                                    str(reference))
+            return produced_value
+        except ValueError, err:
+            # TODO(kristijanburnik): Parse the index and show the caret pointer.
+            # TODO(kristijanburnik): Add a test for this.
+            raise SchemaError("Invalid template:\n%s\n\nValueError: %s" % \
+                              (template, err.message))
+        except KeyError, err:
+            # TODO(kristijanburnik): Parse the index and show the caret pointer.
+            # TODO(kristijanburnik): Add a test for this.
+            raise SchemaError("Invalid template:\n%s\n\nKeyError: %s" % \
+                              (template, err.message))
 
 
     def _serialize(self, selection):
@@ -130,10 +154,14 @@ class Generator(object):
                 return template
 
             for template_key, filename_pattern in mixed.iteritems():
-                subtemplate_filename = filename_pattern % extended_selection
+                subtemplate_filename = self._produce(filename_pattern,
+                                                     extended_selection,
+                                                     reference=(filename, template_key),
+                                                     check_produces=False)
                 subtemplate = self.reader.read(subtemplate_filename, self.paths)
-                extended_selection[template_key] = subtemplate % \
-                                                   extended_selection
+                extended_selection[template_key] = self._produce(
+                    subtemplate, extended_selection, reference=template_key,
+                    check_produces=False)
 
             return template
         else:

@@ -15,6 +15,10 @@ class NotReachedError(Exception):
     """Error raised when unreachable code is executed."""
     pass
 
+class TemplateError(Exception):
+    """Error raised when there is a template issue."""
+    pass
+
 class Validator(object):
     def __init__(self, spec, schema):
         self._rule_method = {"matches": self._assert_matches,
