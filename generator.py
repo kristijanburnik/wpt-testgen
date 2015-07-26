@@ -112,13 +112,14 @@ class Generator(object):
                                             extended_selection,
                                             reference=do_rule["template"])
                     self.writer.write(file_path, content)
-                elif action == "set_extension":
-                    content_template = self._resolve_template(
-                            do_rule["template"], extended_selection)
-                    content = self._produce(content_template,
-                                            extended_selection,
-                                            reference=do_rule["template"])
-                    extended_selection[do_rule["key"]] = content
+                elif action == "update_extensions":
+                    for extension_key, extension_template in do_rule["extensions"].iteritems():
+                        content_template = self._resolve_template(
+                                extension_template, extended_selection)
+                        content = self._produce(content_template,
+                                                extended_selection,
+                                                reference=extension_template)
+                        extended_selection[extension_key] = content
                 else:
                     raise ValueError("Invalid do action: %s" % action)
 

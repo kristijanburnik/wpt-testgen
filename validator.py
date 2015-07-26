@@ -179,12 +179,13 @@ class Validator(object):
             when_rules = schema[key]
             assert_non_empty_list(schema, key)
             # The only subset currently supported for when clauses.
-            allowed_action_values = ["generate", "set_extension"]
+            allowed_action_values = ["generate", "update_extensions"]
             allowed_when_fields = ["match_any", "do"]
-            allowed_do_fields_map = {"generate": ["action", "path", "template"],
-                                     "set_extension": ["action",
-                                                       "key",
-                                                       "template"]}
+            allowed_do_fields_map = {"generate": {"action": assert_non_empty_string,
+                                                  "path": assert_non_empty_string,
+                                                  "template": assert_non_empty_string},
+                                     "update_extensions": {"action": assert_non_empty_string,
+                                                           "extensions": assert_non_empty_dict}}
             i = 0;
             for when_rule in when_rules:
                 assert_contains_only_fields(when_rule, allowed_when_fields)
@@ -203,8 +204,8 @@ class Validator(object):
 
                     allowed_do_fields = allowed_do_fields_map[do_rule["action"]]
                     assert_contains_only_fields(do_rule, allowed_do_fields)
-                    for allowed_do_field in allowed_do_fields:
-                        assert_non_empty_string(do_rule, allowed_do_field)
+                    for allowed_do_field, assertion in allowed_do_fields.iteritems():
+                        assertion(do_rule, allowed_do_field)
                     j += 1
                 i += 1
         except AssertionError, err:
